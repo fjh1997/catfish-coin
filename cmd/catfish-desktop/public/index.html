@@ -129,8 +129,14 @@
       <div class="panel">
         <div class="row between">
           <h2 data-i18n="explorer.publicTitle">公开区块交易</h2>
-          <button id="blocksBtn" class="secondary" data-i18n="actions.refreshBlocks">刷新区块</button>
+          <div class="pager">
+            <button id="blocksLatestBtn" class="secondary" data-i18n="actions.latestBlocks">最新</button>
+            <button id="blocksNewerBtn" class="secondary" data-i18n="actions.newerBlocks">上一页</button>
+            <button id="blocksOlderBtn" class="secondary" data-i18n="actions.olderBlocks">下一页</button>
+            <button id="blocksBtn" class="secondary" data-i18n="actions.refreshBlocks">刷新区块</button>
+          </div>
         </div>
+        <div id="blocksPageInfo" class="page-info">...</div>
         <div class="table-wrap">
           <table>
             <thead>

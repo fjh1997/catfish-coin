@@ -1076,9 +1076,9 @@ func (a *app) handleContractQuery(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *app) handleBlocks(w http.ResponseWriter, r *http.Request) {
-	limit := 12
+	limit := 16
 	if raw := r.URL.Query().Get("limit"); raw != "" {
-		if n, err := strconv.Atoi(raw); err == nil && n > 0 && n <= 50 {
+		if n, err := strconv.Atoi(raw); err == nil && n > 0 && n <= 100 {
 			limit = n
 		}
 	}
@@ -1087,8 +1087,20 @@ func (a *app) handleBlocks(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	startTopo := info.TopoHeight
+	if raw := r.URL.Query().Get("start"); raw != "" {
+		if n, err := strconv.ParseInt(raw, 10, 64); err == nil {
+			if n < 0 {
+				n = 0
+			}
+			if n > info.TopoHeight {
+				n = info.TopoHeight
+			}
+			startTopo = n
+		}
+	}
 	var blocks []explorerBlock
-	for topo := info.TopoHeight; topo >= 0 && len(blocks) < limit; topo-- {
+	for topo := startTopo; topo >= 0 && len(blocks) < limit; topo-- {
 		var result rpc.GetBlockHeaderByHeight_Result
 		if err := a.daemonCall("getblockheaderbytopoheight", rpc.GetBlockHeaderByTopoHeight_Params{TopoHeight: uint64(topo)}, &result); err == nil {
 			blocks = append(blocks, a.explorerBlock(result.Block_Header))
@@ -1097,7 +1109,29 @@ func (a *app) handleBlocks(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	writeJSON(w, map[string]interface{}{"blocks": blocks})
+	endTopo := startTopo
+	if len(blocks) > 0 {
+		endTopo = blocks[len(blocks)-1].TopoHeight
+	}
+	nextStart := int64(-1)
+	if len(blocks) > 0 && endTopo > 0 {
+		nextStart = endTopo - 1
+	}
+	newerStart := int64(-1)
+	if startTopo < info.TopoHeight {
+		newerStart = startTopo + int64(limit)
+		if newerStart > info.TopoHeight {
+			newerStart = info.TopoHeight
+		}
+	}
+	writeJSON(w, map[string]interface{}{
+		"blocks":     blocks,
+		"latestTopo": info.TopoHeight,
+		"startTopo":  startTopo,
+		"endTopo":    endTopo,
+		"nextStart":  nextStart,
+		"newerStart": newerStart,
+	})
 }
 
 func (a *app) handleWalletTransactions(w http.ResponseWriter, r *http.Request) {

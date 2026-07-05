@@ -4,6 +4,10 @@ const state = {
   status: null,
   activeTab: 'wallet',
   lang: detectLanguage(),
+  blockStart: null,
+  blockNextStart: null,
+  blockNewerStart: null,
+  blockPageSize: 16,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -22,6 +26,9 @@ const i18n = {
     'actions.installContract': '安装合约',
     'actions.call': '调用',
     'actions.query': '查询',
+    'actions.latestBlocks': '最新',
+    'actions.newerBlocks': '上一页',
+    'actions.olderBlocks': '下一页',
     'actions.refreshBlocks': '刷新区块',
     'actions.refreshWalletTx': '刷新我的交易',
     'actions.refreshLogs': '刷新日志',
@@ -88,6 +95,7 @@ const i18n = {
     'blocks.payload': 'Payload {payloads}',
     'blocks.noTransactions': '无交易',
     'blocks.empty': '暂无区块',
+    'blocks.pageInfo': 'Topo {start} - {end} / 最新 {latest}',
     'walletTx.pending': '{kind}（待确认）',
     'walletTx.empty': '暂无可解密交易',
     'walletTx.miningReward': '挖矿奖励',
@@ -108,6 +116,9 @@ const i18n = {
     'actions.installContract': 'Install Contract',
     'actions.call': 'Call',
     'actions.query': 'Query',
+    'actions.latestBlocks': 'Latest',
+    'actions.newerBlocks': 'Newer',
+    'actions.olderBlocks': 'Older',
     'actions.refreshBlocks': 'Refresh Blocks',
     'actions.refreshWalletTx': 'Refresh My Txs',
     'actions.refreshLogs': 'Refresh Logs',
@@ -174,6 +185,7 @@ const i18n = {
     'blocks.payload': 'Payload {payloads}',
     'blocks.noTransactions': 'No transactions',
     'blocks.empty': 'No blocks yet',
+    'blocks.pageInfo': 'Topo {start} - {end} / latest {latest}',
     'walletTx.pending': '{kind} (pending)',
     'walletTx.empty': 'No decryptable transactions',
     'walletTx.miningReward': 'Mining reward',
@@ -389,9 +401,14 @@ function formatBlockTime(timestamp) {
   });
 }
 
-async function refreshBlocks() {
+async function refreshBlocks(start = state.blockStart) {
   try {
-    const data = await api('/api/blocks?limit=16');
+    const params = new URLSearchParams({ limit: String(state.blockPageSize) });
+    if (Number.isFinite(start)) params.set('start', String(start));
+    const data = await api(`/api/blocks?${params.toString()}`);
+    state.blockStart = Number.isFinite(Number(data.startTopo)) ? Number(data.startTopo) : null;
+    state.blockNextStart = Number(data.nextStart) >= 0 ? Number(data.nextStart) : null;
+    state.blockNewerStart = Number(data.newerStart) >= 0 ? Number(data.newerStart) : null;
     const rows = (data.blocks || []).map((block) => {
       const transactions = block.transactions || [];
       const txRows = transactions.map((tx) => `
@@ -421,9 +438,20 @@ async function refreshBlocks() {
     `;
     }).join('');
     $('blocks').innerHTML = rows || `<tr><td colspan="6">${escapeHtml(t('blocks.empty'))}</td></tr>`;
+    renderBlockPager(data);
   } catch (error) {
     toast(error.message);
   }
+}
+
+function renderBlockPager(data) {
+  const start = Number(data.startTopo || 0);
+  const end = Number(data.endTopo || 0);
+  const latest = Number(data.latestTopo || 0);
+  $('blocksPageInfo').textContent = t('blocks.pageInfo', { start, end, latest });
+  $('blocksLatestBtn').disabled = !(state.blockNewerStart !== null);
+  $('blocksNewerBtn').disabled = state.blockNewerStart === null;
+  $('blocksOlderBtn').disabled = state.blockNextStart === null;
 }
 
 async function refreshWalletTransactions() {
@@ -569,7 +597,14 @@ function bind() {
   $('refreshBtn').addEventListener('click', refreshStatus);
   $('minerBtn').addEventListener('click', toggleMiner);
   $('logsBtn').addEventListener('click', refreshLogs);
-  $('blocksBtn').addEventListener('click', refreshBlocks);
+  $('blocksBtn').addEventListener('click', () => refreshBlocks());
+  $('blocksLatestBtn').addEventListener('click', () => refreshBlocks(null));
+  $('blocksNewerBtn').addEventListener('click', () => {
+    if (state.blockNewerStart !== null) refreshBlocks(state.blockNewerStart);
+  });
+  $('blocksOlderBtn').addEventListener('click', () => {
+    if (state.blockNextStart !== null) refreshBlocks(state.blockNextStart);
+  });
   $('walletTxBtn').addEventListener('click', refreshWalletTransactions);
   $('seedBtn').addEventListener('click', showSeed);
   $('sendBtn').addEventListener('click', sendTransfer);

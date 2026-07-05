@@ -314,6 +314,19 @@ td.hash {
   margin-top: 14px;
 }
 
+.pager {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.page-info {
+  color: #667066;
+  font-size: 12px;
+  margin: 10px 0 8px;
+}
+
 .tx-list {
   display: grid;
   gap: 8px;
@@ -378,8 +391,14 @@ td.hash {
   }
 
   .top-actions button,
-  .actions button {
+  .actions button,
+  .pager button {
     flex: 1;
+  }
+
+  .pager {
+    width: 100%;
+    justify-content: stretch;
   }
 
   .status-panel,

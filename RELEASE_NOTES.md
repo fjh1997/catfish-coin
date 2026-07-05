@@ -1,16 +1,15 @@
-# Catfish Coin v0.1.4 / 猫鱼币 v0.1.4
+# Catfish Coin v0.1.5 / 猫鱼币 v0.1.5
 
 ## 中文
 
-本版本修复新钱包注册后挖矿地址仍在成熟期时无法继续出块的问题。
+本版本改进区块链浏览器分页。
 
 更新内容：
 
-- 如果当前钱包已经注册但矿工地址还在成熟等待期，客户端会临时使用引导地址出块，避免网络停住。
-- 钱包矿工地址成熟后，客户端会自动切回当前钱包地址挖矿。
-- 矿工状态新增 `引导出块中`，区分“正在帮网络推进区块”和“正在挖到自己的钱包”。
-- 钱包状态会显示挖矿地址还需要多少个区块成熟；该成熟度固定按注册 topo + 25 判断，不会再出现先可挖、后不可挖的倒退。
-- 保留 v0.1.3 的区块浏览器出块时间显示，以及矿工地址精确验证修复。
+- 区块链浏览器不再只显示最近十几个区块。
+- 新增 `最新`、`上一页`、`下一页` 按钮，可以一直翻到创世区块。
+- 区块接口新增 `start` 参数，并返回当前页 topo 范围和翻页指针。
+- 保留 v0.1.4 的挖矿地址成熟期引导出块逻辑。
 
 使用方式：
 
@@ -27,15 +26,14 @@
 
 ## English
 
-This release fixes mining startup when a newly registered wallet is still inside the miner-address maturity window.
+This release improves block explorer pagination.
 
 Changes:
 
-- If the current wallet is registered but its miner address is still maturing, the client temporarily mines to the bootstrap address so the network can keep producing blocks.
-- Once the wallet miner address is mature, the client automatically switches mining rewards back to the current wallet address.
-- The miner status now shows `Bootstrap mining` for this temporary state.
-- The wallet status now shows how many blocks remain before the miner address is mature. Maturity is always calculated as registration topo + 25, so the client no longer flips from ready back to not-ready as the chain grows.
-- This keeps the v0.1.3 block-time explorer display and exact miner-address validation fix.
+- The block explorer no longer shows only the latest small window of blocks.
+- Added `Latest`, `Newer`, and `Older` controls so users can page back to genesis.
+- The block API now accepts `start` and returns the current topo range plus pagination cursors.
+- Keeps the v0.1.4 bootstrap mining behavior for maturing miner addresses.
 
 Usage:
 
