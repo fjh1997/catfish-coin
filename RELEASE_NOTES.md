@@ -1,15 +1,15 @@
-# Catfish Coin v0.1.5 / 猫鱼币 v0.1.5
+# Catfish Coin v0.1.6 / 猫鱼币 v0.1.6
 
 ## 中文
 
-本版本改进区块链浏览器分页。
+本版本修复 PoW 挖矿卡在 9 个 miniblock 后无法出完整块的问题。
 
 更新内容：
 
-- 区块链浏览器不再只显示最近十几个区块。
-- 新增 `最新`、`上一页`、`下一页` 按钮，可以一直翻到创世区块。
-- 区块接口新增 `start` 参数，并返回当前页 topo 范围和翻页指针。
-- 保留 v0.1.4 的挖矿地址成熟期引导出块逻辑。
+- 修复 miner 提交 miniblock 后被误判为 `Account Unregistered` / `unregistered miner` 的问题。
+- 修复原因：DERO miniblock 只序列化矿工地址哈希的前 16 字节，节点侧校验不能按完整 32 字节比较。
+- 本地验证已从高度 28 挖到 30，`rejected=0`，钱包余额已增加。
+- 保留 v0.1.5 的区块浏览器分页功能。
 
 使用方式：
 
@@ -26,14 +26,14 @@
 
 ## English
 
-This release improves block explorer pagination.
+This release fixes PoW mining getting stuck after 9 miniblocks without producing a full block.
 
 Changes:
 
-- The block explorer no longer shows only the latest small window of blocks.
-- Added `Latest`, `Newer`, and `Older` controls so users can page back to genesis.
-- The block API now accepts `start` and returns the current topo range plus pagination cursors.
-- Keeps the v0.1.4 bootstrap mining behavior for maturing miner addresses.
+- Fixed miner submissions being incorrectly rejected as `Account Unregistered` / `unregistered miner`.
+- Root cause: DERO miniblocks serialize only the first 16 bytes of the miner address hash, so node-side validation must not compare all 32 bytes.
+- Locally verified mining from height 28 to 30 with `rejected=0`; the wallet balance increased.
+- Keeps the v0.1.5 block explorer pagination feature.
 
 Usage:
 

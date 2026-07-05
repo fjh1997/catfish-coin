@@ -258,6 +258,10 @@ func newUpgrader() *websocket.Upgrader {
 		if !sresult || err != nil {
 			sess.rejected++
 			atomic.AddInt64(&CountMinisRejected, 1)
+			if err == nil {
+				err = fmt.Errorf("submit result was false")
+			}
+			logger.Error(err, "submitted mining work rejected", "jobid", p.JobID, "result", sresult, "blid", blid)
 		}
 
 	})

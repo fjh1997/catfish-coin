@@ -665,9 +665,13 @@ func AddressKeyFromHash(balanceTree *graviton.Tree, hash crypto.Hash) (keyCompre
 	if err != nil || len(keyCompressed) == 0 {
 		return nil, nil, false
 	}
-	keyHash := graviton.Sum(keyCompressed)
-	if !bytes.Equal(keyHash[:], hash[:]) {
+	if !addressHashMatchesKey(keyCompressed, hash) {
 		return nil, nil, false
 	}
 	return keyCompressed, balanceSerialized, true
+}
+
+func addressHashMatchesKey(keyCompressed []byte, hash crypto.Hash) bool {
+	keyHash := graviton.Sum(keyCompressed)
+	return bytes.Equal(keyHash[:16], hash[:16])
 }
