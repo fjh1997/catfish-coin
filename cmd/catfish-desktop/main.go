@@ -39,10 +39,11 @@ import (
 var publicFiles embed.FS
 
 const (
-	defaultClientPort = "8797"
-	daemonRPCPort     = "40412"
-	getworkPort       = "40410"
-	publicSeedNode    = "150.158.101.65:40411"
+	defaultClientPort         = "8797"
+	daemonRPCPort             = "40412"
+	getworkPort               = "40410"
+	publicSeedNode            = "150.158.101.65:40411"
+	registrationConfirmations = int64(3)
 )
 
 type app struct {
@@ -688,13 +689,42 @@ func (a *app) handleStatus(w http.ResponseWriter, r *http.Request) {
 	a.mu.Unlock()
 
 	walletInfo := map[string]interface{}{"ready": false}
+	registrationView := map[string]interface{}{
+		"running":                reg.Running,
+		"done":                   reg.Done,
+		"txid":                   reg.TXID,
+		"lastError":              reg.LastError,
+		"started":                reg.Started,
+		"status":                 "unregistered",
+		"spendable":              false,
+		"confirmationsRequired":  registrationConfirmations,
+		"confirmationsRemaining": 0,
+	}
 	if wallet != nil {
+		registered := wallet.IsRegistered()
+		registrationHeight := wallet.Get_Registration_TopoHeight()
+		remaining := int64(0)
+		registrationStatus := "unregistered"
+		spendable := false
+		if registered {
+			remaining = registrationConfirmationsRemaining(daemonInfo.TopoHeight, registrationHeight)
+			if remaining > 0 {
+				registrationStatus = "confirming"
+			} else {
+				registrationStatus = "spendable"
+				spendable = true
+			}
+		} else if reg.Running {
+			registrationStatus = "running"
+		} else if reg.Done && reg.TXID != "" {
+			registrationStatus = "submitted"
+		}
 		mature, locked := wallet.Get_Balance()
 		walletInfo = map[string]interface{}{
 			"ready":              true,
 			"address":            wallet.GetAddress().String(),
-			"registered":         wallet.IsRegistered(),
-			"registrationHeight": wallet.Get_Registration_TopoHeight(),
+			"registered":         registered,
+			"registrationHeight": registrationHeight,
 			"height":             wallet.Get_Height(),
 			"daemonHeight":       wallet.Get_Daemon_Height(),
 			"balanceAtomic":      mature + locked,
@@ -704,6 +734,10 @@ func (a *app) handleStatus(w http.ResponseWriter, r *http.Request) {
 			"unlocked":           rpc.FormatMoney(mature),
 			"locked":             rpc.FormatMoney(locked),
 		}
+		registrationView["status"] = registrationStatus
+		registrationView["spendable"] = spendable
+		registrationView["registrationHeight"] = registrationHeight
+		registrationView["confirmationsRemaining"] = remaining
 	}
 
 	writeJSON(w, map[string]interface{}{
@@ -712,7 +746,7 @@ func (a *app) handleStatus(w http.ResponseWriter, r *http.Request) {
 		},
 		"daemon":       info,
 		"wallet":       walletInfo,
-		"registration": reg,
+		"registration": registrationView,
 		"miner": map[string]interface{}{
 			"running": miner != nil && miner.running(),
 			"mode":    processTarget(miner),
@@ -852,7 +886,7 @@ func (a *app) handleTransfer(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	wallet := a.wallet
 	a.mu.Unlock()
-	if err := ensureSpendableWallet(wallet); err != nil {
+	if err := a.ensureSpendableWallet(wallet); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -898,7 +932,7 @@ func (a *app) handleContractInstall(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	wallet := a.wallet
 	a.mu.Unlock()
-	if err := ensureSpendableWallet(wallet); err != nil {
+	if err := a.ensureSpendableWallet(wallet); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -936,7 +970,7 @@ func (a *app) handleContractCall(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	wallet := a.wallet
 	a.mu.Unlock()
-	if err := ensureSpendableWallet(wallet); err != nil {
+	if err := a.ensureSpendableWallet(wallet); err != nil {
 		writeError(w, err)
 		return
 	}
@@ -1340,14 +1374,50 @@ func (a *app) daemonCall(method string, params interface{}, result interface{}) 
 	return json.Unmarshal(decoded.Result, result)
 }
 
-func ensureSpendableWallet(wallet *walletapi.Wallet_Disk) error {
+func (a *app) ensureSpendableWallet(wallet *walletapi.Wallet_Disk) error {
 	if wallet == nil {
-		return fmt.Errorf("wallet is not ready")
+		return fmt.Errorf("钱包还没有准备好，请稍后重试")
 	}
-	if !wallet.IsRegistered() {
-		return fmt.Errorf("wallet address is not on-chain yet; click mining once to finish first-time on-chain activation")
+
+	var info rpc.GetInfo_Result
+	if err := a.daemonCall("get_info", nil, &info); err != nil {
+		return fmt.Errorf("节点还没有准备好，无法确认钱包注册状态: %w", err)
 	}
-	return nil
+
+	_ = wallet.Sync_Wallet_Memory_With_Daemon()
+	self := wallet.GetAddress().String()
+	latest, latestErr := a.encryptedBalance(self, -1)
+	if wallet.IsRegistered() || (latestErr == nil && latest.Status == "OK") {
+		registrationTopo := wallet.Get_Registration_TopoHeight()
+		if latestErr == nil && latest.Status == "OK" && latest.Registration >= 0 {
+			registrationTopo = latest.Registration
+		}
+		remaining := registrationConfirmationsRemaining(info.TopoHeight, registrationTopo)
+		if remaining > 0 {
+			return walletRegistrationConfirmingError("当前钱包", remaining, info.TopoHeight, registrationTopo)
+		}
+		if !wallet.IsRegistered() {
+			_ = wallet.Sync_Wallet_Memory_With_Daemon()
+			if !wallet.IsRegistered() {
+				return fmt.Errorf("当前钱包已在节点上注册，但本地钱包还没有同步到注册状态；请等待几秒或点击刷新后重试（当前 topoheight=%d，注册 topoheight=%d）", info.TopoHeight, registrationTopo)
+			}
+		}
+		return nil
+	}
+
+	a.mu.Lock()
+	reg := a.registration
+	a.mu.Unlock()
+	if reg.Running {
+		return fmt.Errorf("当前钱包正在生成并提交注册交易，请等待注册交易进入区块")
+	}
+	if reg.Done && reg.TXID != "" {
+		return fmt.Errorf("当前钱包注册交易已提交，但还没有被新区块确认；请开始挖矿或等待其他矿工出块。确认后才能转账或部署合约。注册交易 TXID: %s", reg.TXID)
+	}
+	if latestErr != nil && !strings.Contains(latestErr.Error(), "Account Unregistered") {
+		return fmt.Errorf("无法确认当前钱包注册状态: %w", latestErr)
+	}
+	return fmt.Errorf("当前钱包还没有上链注册；请点击“开始挖矿”完成首次注册，注册交易进块并确认后才能转账或部署合约")
 }
 
 func (a *app) preflightTransfer(wallet *walletapi.Wallet_Disk, destination string) error {
@@ -1368,7 +1438,16 @@ func (a *app) preflightTransfer(wallet *walletapi.Wallet_Disk, destination strin
 	self := wallet.GetAddress().String()
 	_, nonceTopo, _, _, err := wallet.GetEncryptedBalanceAtTopoHeight(zeroscid, -1, self)
 	if err != nil {
-		return fmt.Errorf("当前钱包还没有完成链上注册，或本机节点还没有同步到注册区块，请先挖矿并等待链上状态显示为已上链")
+		if latest, latestErr := a.encryptedBalance(self, -1); latestErr == nil {
+			return explainBalanceLookupError("当前钱包", self, info.TopoHeight-registrationConfirmations, info.TopoHeight, err, latest)
+		}
+		a.mu.Lock()
+		reg := a.registration
+		a.mu.Unlock()
+		if reg.Done && reg.TXID != "" {
+			return fmt.Errorf("当前钱包注册交易已提交，但还没有被新区块确认；请开始挖矿或等待其他矿工出块。注册交易 TXID: %s", reg.TXID)
+		}
+		return fmt.Errorf("当前钱包还没有上链注册；请点击“开始挖矿”完成首次注册，注册交易进块并确认后才能转账")
 	}
 
 	checkTopo := int64(-1)
@@ -1405,6 +1484,17 @@ func (a *app) encryptedBalance(address string, topoheight int64) (rpc.GetEncrypt
 	return result, err
 }
 
+func registrationConfirmationsRemaining(currentTopo, registrationTopo int64) int64 {
+	if registrationTopo < 0 {
+		return 0
+	}
+	checkTopo := currentTopo - registrationConfirmations
+	if registrationTopo <= checkTopo {
+		return 0
+	}
+	return registrationTopo - checkTopo
+}
+
 type errAccountWaitingForConfirmations struct{}
 
 func (errAccountWaitingForConfirmations) Error() string {
@@ -1413,16 +1503,19 @@ func (errAccountWaitingForConfirmations) Error() string {
 
 func explainBalanceLookupError(label, address string, checkTopo, currentTopo int64, err error, latest rpc.GetEncryptedBalance_Result) error {
 	if latest.Status == "OK" && checkTopo >= 0 && latest.Registration > checkTopo {
-		wait := latest.Registration - checkTopo
-		if wait < 1 {
-			wait = 1
-		}
-		return fmt.Errorf("%s刚上链，确认数还不够；请再等大约 %d 个区块后重试（当前 topoheight=%d，转账检查 topoheight=%d，注册 topoheight=%d）", label, wait, currentTopo, checkTopo, latest.Registration)
+		return walletRegistrationConfirmingError(label, latest.Registration-checkTopo, currentTopo, latest.Registration)
 	}
 	if strings.Contains(err.Error(), "Account Unregistered") {
 		return fmt.Errorf("%s还没有上链注册：%s", label, address)
 	}
 	return fmt.Errorf("无法读取%s的链上余额状态: %w", label, err)
+}
+
+func walletRegistrationConfirmingError(label string, remaining, currentTopo, registrationTopo int64) error {
+	if remaining < 1 {
+		remaining = 1
+	}
+	return fmt.Errorf("%s已注册，但注册区块确认数还不够；还需要大约 %d 个区块确认后再重试（当前 topoheight=%d，注册 topoheight=%d）", label, remaining, currentTopo, registrationTopo)
 }
 
 func parseMoney(input string) (uint64, error) {

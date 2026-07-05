@@ -1,16 +1,16 @@
-# Catfish Coin v0.1.1 / 猫鱼币 v0.1.1
+# Catfish Coin v0.1.2 / 猫鱼币 v0.1.2
 
 ## 中文
 
-本版本主要改进桌面客户端的语言体验和项目说明。
+本版本修复注册状态提示不准确的问题。
 
 更新内容：
 
-- 桌面客户端新增中文 / English 切换。
-- 语言选择会保存在本机，下次打开自动沿用。
-- 钱包、转账、合约、浏览器、日志、按钮、状态和常见提示已接入中英文文案。
-- README 新增两张客户端截图。
-- Windows 发布包内的 `README.txt` 改为中文说明在前、英文说明在后。
+- 钱包页链上状态现在区分“注册交易已提交”“已注册但待确认”“已注册可用”。
+- 已注册但确认数不够时，会显示还差大约几个区块确认。
+- 转账、安装合约、调用合约前的检查会给出更准确的注册状态错误。
+- 如果注册交易已提交但还没进块，会提示等待出块并显示注册交易 TXID。
+- 如果节点已确认注册但本地钱包还没同步，会提示等待同步，而不是误报未注册。
 
 使用方式：
 
@@ -27,15 +27,15 @@
 
 ## English
 
-This release improves the desktop client's language experience and project documentation.
+This release fixes inaccurate wallet registration status messages.
 
 Changes:
 
-- Added Chinese / English switching to the desktop client.
-- The language choice is saved locally and reused on the next launch.
-- Wallet, transfer, contracts, explorer, logs, buttons, status text, and common notifications now use bilingual UI strings.
-- Added two client screenshots to the README.
-- Updated the bundled Windows `README.txt` to place Chinese instructions first and English instructions second.
+- The wallet page now distinguishes between "registration submitted", "registered but confirming", and "registered and ready".
+- When the wallet is registered but not confirmed enough, the UI shows about how many blocks are still needed.
+- Transfer, contract install, and contract call preflight checks now report more accurate registration-state errors.
+- If the registration transaction is submitted but not mined yet, the client tells the user to wait for a block and shows the registration TXID.
+- If the node sees the registration but the local wallet has not synced it yet, the client reports a wallet-sync delay instead of saying the account is unregistered.
 
 Usage:
 

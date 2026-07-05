@@ -82,6 +82,7 @@ cd catfish-dero
 - 自动启动本地 `derod`。
 - 手动 CPU 挖矿开关。
 - 钱包地址、余额、助记词显示和同步状态。
+- 注册交易已提交、待确认和可用状态提示，并显示剩余确认区块数。
 - 支持带可选加密留言的转账，接收方钱包可解密查看。
 - 发起方提交成功后立即显示待确认转账。
 - 收款方本地节点看到 mempool 交易且钱包能解密时，显示待确认收入。
@@ -205,6 +206,7 @@ For public infrastructure, expose only the P2P port unless you intentionally ope
 - Automatic local `derod` startup.
 - Manual CPU mining toggle.
 - Wallet address, balance, seed display, and sync status.
+- Registration-submitted, confirmation-pending, and ready states with remaining confirmation-block count.
 - Transfers with optional encrypted memo/comment visible to the receiver wallet.
 - Pending outgoing transactions shown immediately after submission.
 - Pending incoming transactions shown when the local node has seen the mempool transaction and the wallet can decrypt it.

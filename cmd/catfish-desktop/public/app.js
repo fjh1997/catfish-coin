@@ -70,6 +70,9 @@ const i18n = {
     'status.minerStopped': '未运行',
     'status.registered': '已上链',
     'status.registrationPending': '上链中',
+    'status.registrationSubmitted': '注册已提交，等待进块',
+    'status.registrationConfirming': '已注册，待确认 {blocks} 块',
+    'status.registrationSpendable': '已注册可用',
     'status.unregistered': '未上链',
     'toast.miningStarted': '挖矿已启动',
     'toast.miningStopped': '挖矿已停止',
@@ -151,6 +154,9 @@ const i18n = {
     'status.minerStopped': 'Stopped',
     'status.registered': 'Registered',
     'status.registrationPending': 'Registering',
+    'status.registrationSubmitted': 'Submitted, waiting for block',
+    'status.registrationConfirming': 'Registered, {blocks} blocks remaining',
+    'status.registrationSpendable': 'Registered and ready',
     'status.unregistered': 'Unregistered',
     'toast.miningStarted': 'Mining started',
     'toast.miningStopped': 'Mining stopped',
@@ -265,6 +271,27 @@ function setLanguage(lang) {
   }
 }
 
+function registrationStatusText(registration, wallet) {
+  const remaining = Number(registration.confirmationsRemaining || 0);
+  switch (registration.status) {
+    case 'spendable':
+      return t('status.registrationSpendable');
+    case 'confirming':
+      return t('status.registrationConfirming', { blocks: Math.max(1, remaining) });
+    case 'submitted':
+      return t('status.registrationSubmitted');
+    case 'running':
+      return t('status.registrationPending');
+    default:
+      if (wallet.registered) {
+        return remaining > 0
+          ? t('status.registrationConfirming', { blocks: Math.max(1, remaining) })
+          : t('status.registered');
+      }
+      return t('status.unregistered');
+  }
+}
+
 async function refreshStatus() {
   try {
     const data = await api('/api/status');
@@ -287,7 +314,7 @@ function renderStatus(data) {
   setText('address', wallet.address || '...');
   setText('balanceFull', wallet.balance || '0.00000');
   setText('unlocked', wallet.unlocked || '0.00000');
-  setText('registered', wallet.registered ? t('status.registered') : (data.registration?.running ? t('status.registrationPending') : t('status.unregistered')));
+  setText('registered', registrationStatusText(data.registration || {}, wallet));
   setText('walletHeight', `${wallet.height || 0}/${wallet.daemonHeight || 0}`);
 
   const minerBtn = $('minerBtn');
