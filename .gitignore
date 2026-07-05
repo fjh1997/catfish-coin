@@ -1,0 +1,14 @@
+dist/
+run/
+*.log
+*.tmp
+*.bak
+*.zip
+*.7z
+*.tar.gz
+*.exe
+*.dll
+*.so
+*.dylib
+catfish-dero-public-windows/
+CatfishDeroPublic/

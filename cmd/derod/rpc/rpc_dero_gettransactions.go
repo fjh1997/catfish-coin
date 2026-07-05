@@ -58,6 +58,30 @@ func GetTransaction(ctx context.Context, p rpc.GetTransaction_Params) (result rp
 						related.Block_Height = -1 // not mined
 						related.In_pool = true
 
+						var expanded transaction.Transaction
+						if err = expanded.Deserialize(tx.Serialize()); err == nil && expanded.TransactionType != transaction.REGISTRATION {
+							if err = chain.Expand_Transaction_NonCoinbase(&expanded); err == nil {
+								for t := range expanded.Payloads {
+									var ring []string
+									for j := 0; j < int(expanded.Payloads[t].Statement.RingSize); j++ {
+										astring := rpc.NewAddressFromKeys((*crypto.Point)(expanded.Payloads[t].Statement.Publickeylist[j]))
+										astring.Mainnet = globals.Config.Name == config.Mainnet.Name
+										ring = append(ring, astring.String())
+									}
+									related.Ring = append(related.Ring, ring)
+								}
+								if signer, err1 := blockchain.Extract_signer(&expanded); err1 == nil {
+									var p bn256.G1
+									if err = p.DecodeCompressed(signer[:]); err == nil {
+										s := rpc.NewAddressFromKeys((*crypto.Point)(&p))
+										s.Mainnet = globals.Config.Name == config.Mainnet.Name
+										related.Signer = s.String()
+									}
+								}
+							}
+							err = nil
+						}
+
 						result.Txs_as_hex = append(result.Txs_as_hex, hex.EncodeToString(tx.Serialize()))
 						result.Txs = append(result.Txs, related)
 					} else {

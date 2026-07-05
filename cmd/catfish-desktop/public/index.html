@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Catfish DERO Desktop</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Catfish DERO</h1>
+      <p id="subtitle">Catfish 公网 DERO 链</p>
+    </div>
+    <div class="top-actions">
+      <button id="refreshBtn" class="secondary">刷新</button>
+      <button id="minerBtn" class="primary">开始挖矿</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel status-panel">
+      <div class="metric">
+        <span>节点</span>
+        <strong id="nodeState">...</strong>
+      </div>
+      <div class="metric">
+        <span>高度</span>
+        <strong id="height">0</strong>
+      </div>
+      <div class="metric">
+        <span>矿工</span>
+        <strong id="minerState">未运行</strong>
+      </div>
+      <div class="metric">
+        <span>余额</span>
+        <strong id="balance">0.00000</strong>
+      </div>
+    </section>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="wallet">钱包</button>
+      <button class="tab" data-tab="transfer">转账</button>
+      <button class="tab" data-tab="contracts">合约</button>
+      <button class="tab" data-tab="explorer">浏览器</button>
+      <button class="tab" data-tab="logs">日志</button>
+    </nav>
+
+    <section id="wallet" class="view active">
+      <div class="panel">
+        <div class="row between">
+          <div>
+            <label>钱包地址</label>
+            <code id="address">...</code>
+          </div>
+          <button id="copyAddress" class="secondary">复制</button>
+        </div>
+        <div class="grid two">
+          <div class="field">
+            <label>总余额</label>
+            <div id="balanceFull" class="value">0.00000</div>
+          </div>
+          <div class="field">
+            <label>可用余额</label>
+            <div id="unlocked" class="value">0.00000</div>
+          </div>
+          <div class="field">
+            <label>链上状态</label>
+            <div id="registered" class="value">...</div>
+          </div>
+          <div class="field">
+            <label>钱包高度</label>
+            <div id="walletHeight" class="value">0</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="seedBtn" class="secondary">显示助记词</button>
+          <button id="restartNodeBtn" class="secondary">重启节点</button>
+        </div>
+        <pre id="seedBox" class="secret" hidden></pre>
+      </div>
+    </section>
+
+    <section id="transfer" class="view">
+      <div class="panel form-panel">
+        <label for="toAddress">接收地址</label>
+        <input id="toAddress" autocomplete="off" placeholder="deto...">
+        <label for="amount">金额</label>
+        <input id="amount" autocomplete="off" placeholder="1.00000">
+        <label for="memo">留言</label>
+        <textarea id="memo" class="memo" spellcheck="false" maxlength="96" placeholder="可选，接收方钱包可解密看到"></textarea>
+        <button id="sendBtn" class="primary">发送</button>
+        <pre id="transferResult" class="result"></pre>
+      </div>
+    </section>
+
+    <section id="contracts" class="view">
+      <div class="panel contract-panel">
+        <div class="contract-grid">
+          <div>
+            <label for="contractSource">DVM 合约源码</label>
+            <textarea id="contractSource" spellcheck="false"></textarea>
+            <button id="installContractBtn" class="primary">安装合约</button>
+          </div>
+          <div>
+            <label for="scid">SCID</label>
+            <input id="scid" autocomplete="off" placeholder="安装后得到的 txid">
+            <label for="entrypoint">入口函数</label>
+            <input id="entrypoint" autocomplete="off" value="Initialize">
+            <label for="callArgs">参数 JSON</label>
+            <textarea id="callArgs" spellcheck="false" class="small">[]</textarea>
+            <label for="deposit">DERO 存入</label>
+            <input id="deposit" autocomplete="off" placeholder="0.00000">
+            <div class="actions">
+              <button id="callContractBtn" class="secondary">调用</button>
+              <button id="queryContractBtn" class="secondary">查询</button>
+            </div>
+          </div>
+        </div>
+        <pre id="contractResult" class="result"></pre>
+      </div>
+    </section>
+
+    <section id="explorer" class="view">
+      <div class="panel">
+        <div class="row between">
+          <h2>公开区块交易</h2>
+          <button id="blocksBtn" class="secondary">刷新区块</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Topo</th>
+                <th>高度</th>
+                <th>交易</th>
+                <th>奖励</th>
+                <th>哈希</th>
+              </tr>
+            </thead>
+            <tbody id="blocks"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel explorer-panel">
+        <div class="row between">
+          <h2>我的可解密交易</h2>
+          <button id="walletTxBtn" class="secondary">刷新我的交易</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>类型</th>
+                <th>金额</th>
+                <th>对方</th>
+                <th>留言</th>
+                <th>TXID</th>
+              </tr>
+            </thead>
+            <tbody id="walletTxs"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="logs" class="view">
+      <div class="panel">
+        <div class="row between">
+          <h2>运行日志</h2>
+          <button id="logsBtn" class="secondary">刷新日志</button>
+        </div>
+        <pre id="logsBox" class="logs"></pre>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="/app.js"></script>
+</body>
+</html>

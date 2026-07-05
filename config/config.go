@@ -115,9 +115,10 @@ var Mainnet = CHAIN_CONFIG{Name: "mainnet",
 
 }
 
-var Testnet = CHAIN_CONFIG{Name: "testnet", // testnet will always have last 3 bytes 0
-	Network_ID:              uuid.FromBytesOrNil([]byte{0x59, 0xd7, 0xf7, 0xe9, 0xdd, 0x48, 0xd5, 0xfd, 0x13, 0x0a, 0xf6, 0xe0, 0x87, 0x00, 0x00, 0x00}),
+var Testnet = CHAIN_CONFIG{Name: "testnet", // Catfish public test chain
+	Network_ID:              uuid.FromBytesOrNil([]byte{0x43, 0x41, 0x54, 0x46, 0x49, 0x53, 0x48, 0x2d, 0x44, 0x45, 0x52, 0x4f, 0x2d, 0x32, 0x36, 0x01}),
 	GETWORK_Default_Port:    10100,
+	P2P_Default_Port:        40411,
 	RPC_Default_Port:        40402,
 	Wallet_RPC_Default_Port: 40403,
 
