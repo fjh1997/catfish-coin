@@ -1,5 +1,9 @@
 # Catfish Coin / 猫鱼币
 
+<p align="center">
+  <img src="docs/images/catfish-logo.svg" alt="Catfish Coin cartoon logo" width="220">
+</p>
+
 ## 界面预览 / Screenshots
 
 ![Catfish Coin desktop wallet](docs/images/catfishcoin.png)
