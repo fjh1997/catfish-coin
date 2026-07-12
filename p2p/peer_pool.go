@@ -21,6 +21,7 @@ package p2p
  */
 import "os"
 import "fmt"
+import "net"
 
 import "errors"
 import "sync"
@@ -311,22 +312,63 @@ func find_peer_to_connect(version int) *Peer {
 	return nil // if no peer found, return nil
 }
 
+// Peer_AddDialable records a peer that advertised a reachable listen port.
+// Unlike ephemeral connection source ports, these are Bitcoin-style "addr"
+// candidates that should be gossiped and dialed by other nodes.
+func Peer_AddDialable(ip string, port uint32, peerID uint64) {
+	if port == 0 || port > 65535 || ip == "" {
+		return
+	}
+	var address string
+	if net.ParseIP(ip) != nil && net.ParseIP(ip).To4() == nil {
+		address = fmt.Sprintf("[%s]:%d", ip, port)
+	} else {
+		address = fmt.Sprintf("%s:%d", ip, port)
+	}
+	p := &Peer{
+		Address:       address,
+		ID:            peerID,
+		LastConnected: uint64(time.Now().UTC().Unix()),
+		Whitelist:     true,
+		GoodCount:     1,
+	}
+	Peer_Add(p)
+	// Ensure whitelist sticks even if the peer already existed as grey.
+	if existing := GetPeerInList(address); existing != nil {
+		peer_mutex.Lock()
+		existing.Whitelist = true
+		existing.Address = address // refresh dial port (STUN mapping may change)
+		if peerID != 0 {
+			existing.ID = peerID
+		}
+		existing.LastConnected = uint64(time.Now().UTC().Unix())
+		existing.ConnectAfter = 0
+		peer_mutex.Unlock()
+	}
+}
+
 // return white listed peer list
-// for use in handshake
+// for use in handshake / ping (Bitcoin-style addr gossip).
+// IMPORTANT: do NOT delete offline peers here — that previously prevented
+// seed nodes from ever sharing dialable desktop peers with each other.
 func get_peer_list() (peers []Peer_Info) {
 	peer_mutex.Lock()
 	defer peer_mutex.Unlock()
 
-	for _, v := range peer_map { // trim the white list
-		if v.Whitelist && !IsAddressConnected(ParseIPNoError(v.Address)) {
-			delete(peer_map, ParseIPNoError(v.Address))
-		}
-	}
-
+	now := uint64(time.Now().UTC().Unix())
 	for _, v := range peer_map {
-		if v.Whitelist {
-			peers = append(peers, Peer_Info{Addr: v.Address})
+		// Share recently useful dialable peers, connected or not.
+		if !v.Whitelist {
+			continue
 		}
+		if v.BlacklistBefore > now {
+			continue
+		}
+		// Skip very stale entries (14 days), similar to Bitcoin addr expiry.
+		if v.LastConnected != 0 && now > v.LastConnected && now-v.LastConnected > 14*24*3600 {
+			continue
+		}
+		peers = append(peers, Peer_Info{Addr: v.Address, Miner: v.Miner})
 	}
 	return
 }
@@ -335,13 +377,13 @@ func get_peer_list_specific(addr string) (peers []Peer_Info) {
 	plist := get_peer_list()
 	sort.SliceStable(plist, func(i, j int) bool { return plist[i].Addr < plist[j].Addr })
 
-	if len(plist) <= 31 {
+	if len(plist) <= 64 {
 		peers = plist
 	} else {
 		index := sort.Search(len(plist), func(i int) bool { return plist[i].Addr < addr })
 		for i := range plist {
 			peers = append(peers, plist[(i+index)%len(plist)])
-			if len(peers) >= 31 {
+			if len(peers) >= 64 {
 				break
 			}
 		}

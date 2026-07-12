@@ -378,7 +378,8 @@ func (a *app) startNode(ctx context.Context) error {
 		"--data-dir=" + filepath.Join(a.dataDir, "chain"),
 		"--rpc-bind=" + a.daemonRPC,
 		"--getwork-bind=" + a.getwork,
-		"--p2p-bind=0.0.0.0:0",
+		// Listen on an ephemeral UDP port (omit --p2p-bind=:0 which disables P2P).
+		// STUN then maps this socket's public ip:port for peer dialing.
 		"--add-priority-node=" + publicSeedNode,
 		"--min-peers=2",
 		"--max-peers=32",
@@ -717,6 +718,20 @@ func (a *app) handleStatus(w http.ResponseWriter, r *http.Request) {
 		info["miniblocks"] = daemonInfo.CountMinisAccepted
 		info["rejected"] = daemonInfo.CountMinisRejected
 		info["network"] = "catfish-public"
+		var connections rpc.GetConnections_Result
+		if err := a.daemonCall("get_connections", nil, &connections); err == nil {
+			info["connectionList"] = connections.Connections
+			info["localPort"] = connections.Local_Port
+			info["advertisedPort"] = connections.Advertised_Port
+			info["externalAddress"] = connections.External_Address
+			if connections.Incoming_connections_count+connections.Outgoing_connections_count > 0 {
+				info["incomingPeers"] = connections.Incoming_connections_count
+				info["outgoingPeers"] = connections.Outgoing_connections_count
+				info["peers"] = connections.Incoming_connections_count + connections.Outgoing_connections_count
+			}
+		} else {
+			info["connectionList"] = []rpc.Connection_Info{}
+		}
 	}
 
 	a.mu.Lock()

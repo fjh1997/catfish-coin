@@ -17,7 +17,6 @@
 package p2p
 
 import "fmt"
-import "net"
 import "bytes"
 import "context"
 
@@ -52,9 +51,12 @@ func (handshake *Handshake_Struct) Fill() {
 	handshake.DaemonVersion = config.Version.String()
 	handshake.Tag = node_tag
 	handshake.UTC_Time = int64(time.Now().UTC().Unix()) // send our UTC time
-	handshake.Local_Port = uint32(P2P_Port)             // export requested or default port
+	handshake.Local_Port = AdvertisedPort()             // STUN mapped port when known
 	handshake.Peer_ID = GetPeerID()                     // give our randomly generated peer id
 	handshake.Pruned = chain.LocatePruneTopo()
+	for _, ep := range ExternalEndpoints() {
+		handshake.Flags = append(handshake.Flags, "stun:"+ep)
+	}
 
 	//	handshake.Flags = // add any flags necessary
 
@@ -109,24 +111,13 @@ func (connection *Connection) dispatch_test_handshake() {
 	// TODO we must also add the peer to our list
 	// which can be distributed to other peers
 	if connection.Port != 0 && connection.Port <= 65535 { // peer is saying it has an open port, handshake is success so add peer
-
-		var p Peer
-		if net.ParseIP(Address(connection)).To4() != nil { // if ipv4
-			p.Address = fmt.Sprintf("%s:%d", Address(connection), connection.Port)
-		} else { // if ipv6
-			p.Address = fmt.Sprintf("[%s]:%d", Address(connection), connection.Port)
-		}
-		p.ID = connection.Peer_ID
-
-		p.LastConnected = uint64(time.Now().UTC().Unix())
-
-		Peer_Add(&p)
+		recordDialableFromHandshake(connection, connection.Port, connection.Peer_ID, response.Flags)
 	}
 
 	// parse delivered peer list as grey list
 	connection.logger.V(4).Info("Peer provides peers", "count", len(response.PeerList))
 	for i := range response.PeerList {
-		if i < 13 {
+		if i < 32 {
 			Peer_Add(&Peer{Address: response.PeerList[i].Addr, LastConnected: uint64(time.Now().UTC().Unix())})
 		}
 	}
@@ -162,9 +153,15 @@ func (c *Connection) Handshake(request Handshake_Struct, response *Handshake_Str
 	response.Fill()
 
 	c.update(&request.Common) // update common information
+
+	// Record dialable endpoints advertised by the peer (Bitcoin-style addr + STUN).
+	if request.Local_Port != 0 && request.Local_Port <= 65535 {
+		recordDialableFromHandshake(c, request.Local_Port, request.Peer_ID, request.Flags)
+	}
+
 	if c.State == ACTIVE {
 		for i := range request.PeerList {
-			if i < 31 {
+			if i < 64 {
 				Peer_Add(&Peer{Address: request.PeerList[i].Addr, LastConnected: uint64(time.Now().UTC().Unix())})
 			}
 		}

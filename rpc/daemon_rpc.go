@@ -316,6 +316,36 @@ type (
 	}
 )
 
+type (
+	GetConnections_Params struct{} // no params
+	Connection_Info       struct {
+		Address       string `json:"address"`
+		Direction     string `json:"direction"` // "in" or "out"
+		PeerID        uint64 `json:"peer_id"`
+		Port          uint32 `json:"port"`
+		Height        int64  `json:"height"`
+		StableHeight  int64  `json:"stable_height"`
+		TopoHeight    int64  `json:"topo_height"`
+		LatencyMS     int64  `json:"latency_ms"`
+		BytesIn       uint64 `json:"bytes_in"`
+		BytesOut      uint64 `json:"bytes_out"`
+		Tag           string `json:"tag,omitempty"`
+		DaemonVersion string `json:"daemon_version,omitempty"`
+		Protocol      string `json:"protocol_version,omitempty"`
+		SyncNode      bool   `json:"sync_node"`
+		StateHash     string `json:"state_hash,omitempty"`
+	}
+	GetConnections_Result struct {
+		Incoming_connections_count uint64            `json:"incoming_connections_count"`
+		Outgoing_connections_count uint64            `json:"outgoing_connections_count"`
+		Connections                []Connection_Info `json:"connections"`
+		Local_Port                 uint32            `json:"local_port"`
+		Advertised_Port            uint32            `json:"advertised_port"`
+		External_Address           string            `json:"external_address,omitempty"`
+		Status                     string            `json:"status"`
+	}
+)
+
 type GasEstimate_Params Transfer_Params // same structure as used by transfer call
 type GasEstimate_Result struct {
 	GasCompute uint64 `json:"gascompute"`

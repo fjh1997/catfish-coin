@@ -74,6 +74,9 @@ var backoff_mutex = sync.Mutex{}
 var Min_Peers = int64(31) // we need to expose this to be modifieable at runtime without taking daemon offline
 var Max_Peers = int64(101)
 
+// Shared KCP listener (same UDP socket as STUN / punch probes).
+var kcpListener *kcp.Listener
+
 // return true if we should back off else we can connect
 func shouldwebackoff(ip string) bool {
 	backoff_mutex.Lock()
@@ -166,6 +169,7 @@ func P2P_Init(params map[string]interface{}) error {
 	globals.Cron.AddFunc("@every 5s", Connection_Pending_Clear) // clean dead connections
 	globals.Cron.AddFunc("@every 10s", ping_loop)               // ping every one
 	globals.Cron.AddFunc("@every 10s", chunks_clean_up)         // clean chunks
+	globals.Cron.AddFunc("@every 5s", introduce_peers_loop)     // seed-coordinated NAT punch
 
 	go time_check_routine() // check whether server time is in sync using ntp
 
@@ -303,6 +307,11 @@ func tunekcp(conn *kcp.UDPSession) {
 // will try to connect with given endpoint
 // will block until the connection dies or is killed
 func connect_with_endpoint(endpoint string, sync_node bool) {
+	connect_with_endpoint_opts(endpoint, sync_node, false)
+}
+
+// skipBackoff lets coordinated NAT punch retry without being blocked for 10s.
+func connect_with_endpoint_opts(endpoint string, sync_node bool, skipBackoff bool) {
 
 	defer globals.Recover(2)
 
@@ -323,24 +332,46 @@ func connect_with_endpoint(endpoint string, sync_node bool) {
 		return //nil, fmt.Errorf("Already connected")
 	}
 
-	if shouldwebackoff(ParseIPNoError(remote_ip.String())) {
-		logger.V(1).Info("backing off from this connection", "ip", remote_ip.String())
-		return
-	} else {
+	if !skipBackoff {
+		if shouldwebackoff(ParseIPNoError(remote_ip.String())) {
+			logger.V(1).Info("backing off from this connection", "ip", remote_ip.String())
+			return
+		}
 		backoff_mutex.Lock()
 		backoff[ParseIPNoError(remote_ip.String())] = time.Now().Unix() + 10
 		backoff_mutex.Unlock()
+	} else {
+		clearBackoff(remote_ip.String())
+		logger.Info("punch dial skipBackoff", "endpoint", endpoint)
 	}
 
 	var masterkey = pbkdf2.Key(globals.Config.Network_ID.Bytes(), globals.Config.Network_ID.Bytes(), 1024, 32, sha1.New)
 	var blockcipher, _ = kcp.NewAESBlockCrypt(masterkey)
 
 	var conn *kcp.UDPSession
+	sharedDial := false
 
 	// since we may be connecting through socks, grab the remote ip for our purpose rightnow
 	//conn, err := globals.Dialer.Dial("tcp", remote_ip.String())
 	if globals.Arguments["--socks-proxy"] == nil {
-		conn, err = kcp.DialWithOptions(remote_ip.String(), blockcipher, 10, 3)
+		// Hole-punch dials must reuse the listen/STUN UDP mapping. DialWithOptions
+		// opens an ephemeral port and breaks coordinated NAT punch.
+		if skipBackoff {
+			// STUN runs before ServeConn; NotifyPunch can arrive early. Wait for
+			// the shared listener — never fall back to ephemeral DialWithOptions.
+			for i := 0; i < 80 && kcpListener == nil; i++ {
+				time.Sleep(100 * time.Millisecond)
+			}
+			if kcpListener == nil {
+				logger.Info("punch dial aborted: shared KCP listener not ready", "endpoint", endpoint)
+				return
+			}
+			conn, err = kcpListener.DialKCP(remote_ip.String())
+			sharedDial = true
+			logger.Info("punch dial shared listen socket", "endpoint", endpoint, "ok", err == nil)
+		} else {
+			conn, err = kcp.DialWithOptions(remote_ip.String(), blockcipher, 10, 3)
+		}
 	} else { // we must move through a socks 5 UDP ASSOCIATE supporting proxy, ssh implementation is partial
 		err = fmt.Errorf("socks proxying is not supported")
 		logger.V(0).Error(err, "Not suported", "server", globals.Arguments["--socks-proxy"])
@@ -386,9 +417,16 @@ func connect_with_endpoint(endpoint string, sync_node bool) {
 	}
 
 	if err != nil {
-		logger.V(3).Error(err, "Dial failed", "endpoint", endpoint)
+		logger.V(3).Error(err, "Dial failed", "endpoint", endpoint, "shared", sharedDial)
 		Peer_SetFail(ParseIPNoError(remote_ip.String())) // update peer list as we see
-		conn.Close()
+		if skipBackoff {
+			backoff_mutex.Lock()
+			backoff[ParseIPNoError(remote_ip.String())] = time.Now().Unix() + 2
+			backoff_mutex.Unlock()
+		}
+		if conn != nil {
+			conn.Close()
+		}
 		return //nil, fmt.Errorf("Dial failed err %s", err.Error())
 	}
 
@@ -410,6 +448,12 @@ func maintain_outgoing_priority_connection(endpoint string, sync_node bool) {
 			return
 		case <-delay.C:
 		}
+		// Priority/seed dials before shared listen is ready cause backoff storms
+		// (seen as ~1min delay before first coordinated punch).
+		if kcpListener == nil {
+			continue
+		}
+		clearBackoff(endpoint)
 		connect_with_endpoint(endpoint, sync_node)
 	}
 }
@@ -425,6 +469,9 @@ func maintain_seed_node_connection() {
 			return
 		case <-delay.C:
 		}
+		if kcpListener == nil {
+			continue
+		}
 		endpoint := ""
 		if globals.IsMainnet() { // choose mainnet seed node
 			r, _ := rand.Int(rand.Reader, big.NewInt(10240))
@@ -434,6 +481,7 @@ func maintain_seed_node_connection() {
 			endpoint = config.Testnet_seed_nodes[r.Int64()%int64(len(config.Testnet_seed_nodes))]
 		}
 		if endpoint != "" {
+			clearBackoff(endpoint)
 			connect_with_endpoint(endpoint, sync_node)
 			//connect_with_endpoint(endpoint, true) // seed nodes always have sync mode
 		}
@@ -499,7 +547,7 @@ func P2P_Server_v2() {
 
 	var accept_limiter = rate.NewLimiter(10.0, 40) // 10 incoming per sec, burst of 40 is okay
 
-	default_address := "0.0.0.0:0" // be default choose a random port
+	default_address := "0.0.0.0:0" // by default choose a random port
 	if _, ok := globals.Arguments["--p2p-bind"]; ok && globals.Arguments["--p2p-bind"] != nil {
 		addr, err := net.ResolveTCPAddr("tcp", globals.Arguments["--p2p-bind"].(string))
 		if err != nil {
@@ -556,18 +604,40 @@ func P2P_Server_v2() {
 	var masterkey = pbkdf2.Key(globals.Config.Network_ID.Bytes(), globals.Config.Network_ID.Bytes(), 1024, 32, sha1.New)
 	var blockcipher, _ = kcp.NewAESBlockCrypt(masterkey)
 
-	// listen to incoming tcp connections tls style
-	l, err := kcp.ListenWithOptions(default_address, blockcipher, 10, 3)
+	// Bind UDP ourselves so we can STUN on the same socket before KCP owns reads.
+	udpaddr, err := net.ResolveUDPAddr("udp", default_address)
+	if err != nil {
+		logger.Error(err, "Could not resolve P2P listen address", "address", default_address)
+		return
+	}
+	udpconn, err := net.ListenUDP("udp", udpaddr)
 	if err != nil {
 		logger.Error(err, "Could not listen", "address", default_address)
 		return
 	}
-	defer l.Close()
-
-	_, P2P_Port_str, _ := net.SplitHostPort(l.Addr().String())
+	listenUDP = udpconn
+	_, P2P_Port_str, _ := net.SplitHostPort(udpconn.LocalAddr().String())
 	P2P_Port, _ = strconv.Atoi(P2P_Port_str)
 
-	logger.Info("P2P is listening", "address", l.Addr().String())
+	// Discover the NAT mapping belonging to this listen socket (Tailscale-style).
+	discoverExternalAddress(udpconn)
+
+
+	l, err := kcp.ServeConn(blockcipher, 10, 3, udpconn)
+	if err != nil {
+		logger.Error(err, "Could not serve KCP on P2P socket", "address", default_address)
+		udpconn.Close()
+		return
+	}
+	kcpListener = l
+	// Tailscale magicsock-style: plaintext NAT disco before KCP decrypt.
+	l.PacketHook = handleInboundDisco
+	defer func() {
+		kcpListener = nil
+		l.Close()
+	}()
+
+	logger.Info("P2P is listening", "address", l.Addr().String(), "advertised_port", AdvertisedPort(), "external", ExternalEndpointString())
 
 	// A common pattern is to start a loop to continously accept connections
 	for {
@@ -594,7 +664,7 @@ func P2P_Server_v2() {
 		backoff[ParseIPNoError(raddr.String())] = time.Now().Unix() + globals.Global_Random.Int63n(200) // random backing of upto 200 secs
 		backoff_mutex.Unlock()
 
-		logger.V(3).Info("accepting incoming connection", "raddr", raddr.String())
+		logger.Info("accepting incoming connection", "raddr", raddr.String())
 
 		if IsAddressConnected(ParseIPNoError(raddr.String())) {
 			logger.V(4).Info("incoming address is already connected", "ip", raddr.String())
@@ -674,6 +744,15 @@ func set_handlers(o interface{}) {
 	})
 	set_handler(o, "Peer.Ping", func(client *rpc2.Client, args Dummy, reply *Dummy) error {
 		return getc(client).Ping(args, reply)
+	})
+	set_handler(o, "Peer.NotifyPunch", func(client *rpc2.Client, args Punch_Struct, reply *Dummy) error {
+		return getc(client).NotifyPunch(args, reply)
+	})
+	set_handler(o, "Peer.Relay", func(client *rpc2.Client, args Relay_Struct, reply *Dummy) error {
+		return getc(client).Relay(args, reply)
+	})
+	set_handler(o, "Peer.NotifyRelay", func(client *rpc2.Client, args Relay_Struct, reply *Dummy) error {
+		return getc(client).NotifyRelay(args, reply)
 	})
 
 }

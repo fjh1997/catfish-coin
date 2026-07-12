@@ -86,6 +86,8 @@ type Connection struct {
 
 	Incoming        bool     // is connection incoming or outgoing
 	Addr            net.Addr // endpoint on the other end
+	ExternalAddr    string   // primary STUN-advertised ip:port from peer handshake
+	ExternalAddrs   []string // all STUN candidates from peer handshake flags
 	SyncNode        bool     // whether the peer has been added to command line as sync node
 	ProtocolVersion string
 	Tag             string // tag for the other end
@@ -219,7 +221,7 @@ func ping_loop() {
 				fill_common(&request.Common) // fill common info
 
 				c.ping_count++
-				if c.ping_count%10 == 1 {
+				if c.ping_count%3 == 1 { // Bitcoin-like frequent addr gossip
 					request.Common.PeerList = get_peer_list_specific(Address(c))
 				}
 
@@ -349,6 +351,73 @@ func Peer_Count() (Count uint64) {
 		return true
 	})
 	return
+}
+
+// ConnectionView is a read-only snapshot of an active peer connection.
+type ConnectionView struct {
+	Address       string `json:"address"`
+	Direction     string `json:"direction"` // "in" or "out"
+	PeerID        uint64 `json:"peer_id"`
+	Port          uint32 `json:"port"`
+	Height        int64  `json:"height"`
+	StableHeight  int64  `json:"stable_height"`
+	TopoHeight    int64  `json:"topo_height"`
+	LatencyMS     int64  `json:"latency_ms"`
+	BytesIn       uint64 `json:"bytes_in"`
+	BytesOut      uint64 `json:"bytes_out"`
+	Tag           string `json:"tag,omitempty"`
+	DaemonVersion string `json:"daemon_version,omitempty"`
+	Protocol      string `json:"protocol_version,omitempty"`
+	SyncNode      bool   `json:"sync_node"`
+	StateHash     string `json:"state_hash,omitempty"`
+}
+
+// ActiveConnections returns handshaken peers currently connected to this node.
+func ActiveConnections() []ConnectionView {
+	var list []ConnectionView
+	connection_map.Range(func(k, value interface{}) bool {
+		v := value.(*Connection)
+		if atomic.LoadUint32(&v.State) == HANDSHAKE_PENDING || GetPeerID() == v.Peer_ID {
+			return true
+		}
+		dir := "out"
+		if v.Incoming {
+			dir = "in"
+		}
+		addr := ""
+		if v.Addr != nil {
+			addr = v.Addr.String()
+		}
+		latency := atomic.LoadInt64(&v.Latency)
+		if latency < 0 {
+			latency = 0
+		}
+		list = append(list, ConnectionView{
+			Address:       addr,
+			Direction:     dir,
+			PeerID:        atomic.LoadUint64(&v.Peer_ID),
+			Port:          atomic.LoadUint32(&v.Port),
+			Height:        atomic.LoadInt64(&v.Height),
+			StableHeight:  atomic.LoadInt64(&v.StableHeight),
+			TopoHeight:    atomic.LoadInt64(&v.TopoHeight),
+			LatencyMS:     latency / int64(time.Millisecond),
+			BytesIn:       atomic.LoadUint64(&v.BytesIn),
+			BytesOut:      atomic.LoadUint64(&v.BytesOut),
+			Tag:           v.Tag,
+			DaemonVersion: v.DaemonVersion,
+			Protocol:      v.ProtocolVersion,
+			SyncNode:      v.SyncNode,
+			StateHash:     fmt.Sprintf("%x", v.StateHash[:8]),
+		})
+		return true
+	})
+	sort.Slice(list, func(i, j int) bool {
+		if list[i].Direction != list[j].Direction {
+			return list[i].Direction < list[j].Direction
+		}
+		return list[i].Address < list[j].Address
+	})
+	return list
 }
 
 // this returns count of peers in both directions

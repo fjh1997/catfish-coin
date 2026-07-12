@@ -31,6 +31,7 @@ const i18n = {
     'actions.olderBlocks': '下一页',
     'actions.refreshBlocks': '刷新区块',
     'actions.refreshWalletTx': '刷新我的交易',
+    'actions.refreshPeers': '刷新连接',
     'actions.refreshLogs': '刷新日志',
     'metrics.node': '节点',
     'metrics.height': '高度',
@@ -41,6 +42,7 @@ const i18n = {
     'tabs.contracts': '合约',
     'tabs.explorer': '公开区块',
     'tabs.mytxs': '我的交易',
+    'tabs.peers': '节点',
     'tabs.logs': '日志',
     'wallet.address': '钱包地址',
     'wallet.balanceFull': '总余额',
@@ -73,7 +75,19 @@ const i18n = {
     'table.counterparty': '对方',
     'table.memo': '留言',
     'table.txid': 'TXID',
-    'status.onlinePeers': '在线 {peers}',
+    'table.address': '地址',
+    'table.direction': '方向',
+    'table.latency': '延迟',
+    'table.traffic': '流量',
+    'table.version': '版本 / Tag',
+    'table.sync': 'Sync',
+    'peers.title': '活跃连接',
+    'peers.hint': '显示本节点已握手的直接 P2P 连接。公网地址由 STUN 探测；节点经 seed 八卦互连（比特币式 addr）。',
+    'peers.empty': '暂无已握手连接',
+    'peers.external': '本机公网 {endpoint}',
+    'peers.dirIn': '入站',
+    'peers.dirOut': '出站',
+    'status.onlinePeers': '在线 {peers}（出站 {out} / 入站 {in}）',
     'status.offline': '离线',
     'status.registering': '注册中',
     'status.bootstrapMining': '引导出块中',
@@ -124,6 +138,7 @@ const i18n = {
     'actions.olderBlocks': 'Older',
     'actions.refreshBlocks': 'Refresh Blocks',
     'actions.refreshWalletTx': 'Refresh My Txs',
+    'actions.refreshPeers': 'Refresh Peers',
     'actions.refreshLogs': 'Refresh Logs',
     'metrics.node': 'Node',
     'metrics.height': 'Height',
@@ -134,6 +149,7 @@ const i18n = {
     'tabs.contracts': 'Contracts',
     'tabs.explorer': 'Public Blocks',
     'tabs.mytxs': 'My Txs',
+    'tabs.peers': 'Peers',
     'tabs.logs': 'Logs',
     'wallet.address': 'Wallet Address',
     'wallet.balanceFull': 'Total Balance',
@@ -166,7 +182,19 @@ const i18n = {
     'table.counterparty': 'Counterparty',
     'table.memo': 'Memo',
     'table.txid': 'TXID',
-    'status.onlinePeers': 'Online {peers}',
+    'table.address': 'Address',
+    'table.direction': 'Direction',
+    'table.latency': 'Latency',
+    'table.traffic': 'Traffic',
+    'table.version': 'Version / Tag',
+    'table.sync': 'Sync',
+    'peers.title': 'Active Connections',
+    'peers.hint': 'Direct handshaken P2P peers. Public endpoint from STUN; peers gossip via seed (Bitcoin-style addr).',
+    'peers.empty': 'No handshaken peers',
+    'peers.external': 'Public endpoint {endpoint}',
+    'peers.dirIn': 'In',
+    'peers.dirOut': 'Out',
+    'status.onlinePeers': 'Online {peers} (out {out} / in {in})',
     'status.offline': 'Offline',
     'status.registering': 'Registering',
     'status.bootstrapMining': 'Bootstrap mining',
@@ -348,7 +376,13 @@ function renderStatus(data) {
   const wallet = data.wallet || {};
   const miner = data.miner || {};
 
-  setText('nodeState', daemon.online ? t('status.onlinePeers', { peers: daemon.peers || 0 }) : t('status.offline'));
+  setText('nodeState', daemon.online
+    ? t('status.onlinePeers', {
+      peers: daemon.peers || 0,
+      out: daemon.outgoingPeers || 0,
+      in: daemon.incomingPeers || 0,
+    })
+    : t('status.offline'));
   setText('height', daemon.online ? `${daemon.height}/${daemon.topoheight}` : '0');
   setText('minerState', miner.running ? minerStatusText(miner.mode) : t('status.minerStopped'));
   setText('balance', wallet.balance || '0.00000');
@@ -361,6 +395,47 @@ function renderStatus(data) {
   const minerBtn = $('minerBtn');
   minerBtn.textContent = miner.running ? t('actions.stopMining') : t('actions.startMining');
   minerBtn.className = miner.running ? 'warn' : 'primary';
+
+  if (state.activeTab === 'peers') {
+    renderPeers(daemon.connectionList || [], daemon);
+  }
+}
+
+function formatBytes(n) {
+  const value = Number(n || 0);
+  if (!Number.isFinite(value) || value <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let size = value;
+  let unit = 0;
+  while (size >= 1024 && unit < units.length - 1) {
+    size /= 1024;
+    unit += 1;
+  }
+  const digits = unit === 0 ? 0 : 1;
+  return `${size.toFixed(digits)} ${units[unit]}`;
+}
+
+function renderPeers(list, daemon) {
+  const ext = (daemon && daemon.externalAddress) || '';
+  const extEl = $('peersExternal');
+  if (extEl) {
+    extEl.textContent = ext ? t('peers.external', { endpoint: ext }) : '';
+  }
+  const rows = (list || []).map((peer) => {
+    const dir = peer.direction === 'in' ? t('peers.dirIn') : t('peers.dirOut');
+    const version = [peer.daemon_version, peer.tag].filter(Boolean).join(' / ') || '-';
+    const traffic = `${formatBytes(peer.bytes_in)} ↓ / ${formatBytes(peer.bytes_out)} ↑`;
+    return `<tr>
+      <td><code>${escapeHtml(peer.address || '')}</code></td>
+      <td>${escapeHtml(dir)}</td>
+      <td>${escapeHtml(`${peer.height || 0}/${peer.topo_height || 0}`)}</td>
+      <td>${escapeHtml(`${peer.latency_ms || 0} ms`)}</td>
+      <td>${escapeHtml(traffic)}</td>
+      <td>${escapeHtml(version)}</td>
+      <td>${peer.sync_node ? 'yes' : '-'}</td>
+    </tr>`;
+  }).join('');
+  $('peersTable').innerHTML = rows || `<tr><td colspan="7">${escapeHtml(t('peers.empty'))}</td></tr>`;
 }
 
 async function refreshLogs() {
@@ -500,6 +575,9 @@ function switchTab(tab) {
   if (tab === 'mytxs') {
     refreshWalletTransactions();
   }
+  if (tab === 'peers') {
+    refreshStatus();
+  }
 }
 
 async function toggleMiner() {
@@ -607,6 +685,7 @@ function bind() {
   $('refreshBtn').addEventListener('click', refreshStatus);
   $('minerBtn').addEventListener('click', toggleMiner);
   $('logsBtn').addEventListener('click', refreshLogs);
+  $('peersBtn').addEventListener('click', refreshStatus);
   $('blocksBtn').addEventListener('click', () => refreshBlocks());
   $('blocksLatestBtn').addEventListener('click', () => refreshBlocks(null));
   $('blocksNewerBtn').addEventListener('click', () => {

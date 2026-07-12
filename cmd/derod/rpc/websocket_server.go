@@ -314,7 +314,9 @@ var historical_apis = handler.Map{"getinfo": handler.New(GetInfo),
 	"getencryptedbalance":        handler.New(GetEncryptedBalance),
 	"getsc":                      handler.New(GetSC),
 	"getgasestimate":             handler.New(GetGasEstimate),
-	"nametoaddress":              handler.New(NameToAddress)}
+	"nametoaddress":              handler.New(NameToAddress),
+	"get_connections":            handler.New(GetConnections),
+	"getconnections":             handler.New(GetConnections)}
 
 var servicemux = handler.ServiceMap{
 	"DERO": handler.Map{
@@ -337,6 +339,7 @@ var servicemux = handler.ServiceMap{
 		"GetSC":                      handler.New(GetSC),
 		"GetGasEstimate":             handler.New(GetGasEstimate),
 		"NameToAddress":              handler.New(NameToAddress),
+		"GetConnections":             handler.New(GetConnections),
 	},
 	"DAEMON": handler.Map{
 		"Echo": handler.New(DAEMON_Echo),

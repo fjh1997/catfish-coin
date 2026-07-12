@@ -67,6 +67,29 @@ type Peer_Info struct {
 	//LastSeen uint64 `cbor:"LS"`
 }
 
+// Punch_Struct is sent by a coordinating node (usually the seed) to ask
+// two dialable peers to open NAT mappings toward each other at the same time.
+type Punch_Struct struct {
+	Common    Common_Struct `cbor:"COMMON"`
+	Peer_ID   uint64        `cbor:"PID"`   // remote peer id to dial
+	Addr      string        `cbor:"ADDR"`  // primary public ip:port (prefer STUN)
+	Alt_Addr   string   `cbor:"AADDR"`  // alternate (observed path via seed)
+	Cand_Addrs []string `cbor:"CANDS,omitempty"` // extra ICE-style candidates (more STUN hits)
+	Self_Addr  string   `cbor:"SADDR"`  // our advertised endpoint (informational)
+	Nonce     uint64        `cbor:"NONCE"`
+	UnixMilli int64         `cbor:"TS"` // coordinator timestamp
+}
+
+// Relay_Struct is a DERP-like encrypted-opaque frame forwarded by the seed.
+// Payload is not interpreted by the relay (end-to-end app data / disco).
+type Relay_Struct struct {
+	Common  Common_Struct `cbor:"COMMON"`
+	From_ID uint64        `cbor:"FROM"`
+	To_ID   uint64        `cbor:"TO"`
+	Kind    string        `cbor:"KIND"` // "disco", "punch-ack", "ping"
+	Payload []byte        `cbor:"DATA,omitempty"`
+}
+
 type Chain_Request_Struct struct { // our version of chain
 	Common      Common_Struct `cbor:"COMMON"` // add all fields of Common
 	Block_list  [][32]byte    `cbor:"BLIST"`  // block list

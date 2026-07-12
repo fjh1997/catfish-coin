@@ -785,11 +785,19 @@ type (
 		socketReadErrorOnce sync.Once
 
 		rd atomic.Value // read deadline for Accept()
+
+		// PacketHook runs before AES/KCP (Tailscale magicsock-style multiplex).
+		// Return true to consume the datagram (e.g. plaintext NAT disco).
+		PacketHook func(data []byte, addr net.Addr) bool
 	}
 )
 
 // packet input stage
 func (l *Listener) packetInput(data []byte, addr net.Addr) {
+	// Plaintext disco/punch MUST be handled before Decrypt mutates the buffer.
+	if l.PacketHook != nil && l.PacketHook(data, addr) {
+		return
+	}
 	decrypted := false
 	if l.block != nil && len(data) >= cryptHeaderSize {
 		l.block.Decrypt(data, data)
@@ -927,6 +935,28 @@ func (l *Listener) AcceptKCP() (*UDPSession, error) {
 	case <-l.die:
 		return nil, errors.WithStack(io.ErrClosedPipe)
 	}
+}
+
+// DialKCP creates an outgoing session on the Listener's shared packet
+// connection. This keeps the local UDP port (and thus the NAT mapping)
+// identical to the listen/STUN socket — required for coordinated hole punch.
+func (l *Listener) DialKCP(raddr string) (*UDPSession, error) {
+	udpaddr, err := net.ResolveUDPAddr("udp", raddr)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	l.sessionLock.Lock()
+	if old, ok := l.sessions[udpaddr.String()]; ok {
+		// Reuse in-flight session — closing it aborts TLS hole-punch handshakes.
+		l.sessionLock.Unlock()
+		return old, nil
+	}
+	var convid uint32
+	binary.Read(rand.Reader, binary.LittleEndian, &convid)
+	s := newUDPSession(convid, l.dataShards, l.parityShards, l, l.conn, false, udpaddr, l.block)
+	l.sessions[udpaddr.String()] = s
+	l.sessionLock.Unlock()
+	return s, nil
 }
 
 // SetDeadline sets the deadline associated with the listener. A zero time value disables the deadline.

@@ -1,4 +1,31 @@
+# Moefish Coin v0.2.0 / 猫鱼币 v0.2.0
+
+## 中文
+
+本版本重点增强家用节点之间的 **P2P NAT 打洞直连**，并完善节点连接展示相关能力。
+
+更新内容：
+
+- **NAT 打洞**：多 STUN 候选、seed 协调、共享 UDP 监听口、peer-reflexive 学习；可打通时 peer 直连同步。
+- 打通后 seed 临时下线，已建立的直连仍可继续同步。
+- 桌面端 / RPC 增加更完整的节点连接信息展示。
+- README 补充打洞能力与优势说明。
+
+## English
+
+This release focuses on **P2P NAT hole punching** between residential nodes.
+
+Changes:
+
+- Multi-STUN candidates, seed-coordinated punch, shared UDP listen socket, and peer-reflexive learning for direct peer links when NAT allows.
+- After a direct link is up, temporary seed downtime does not drop that peer connection.
+- Richer connection details in the desktop/RPC surface.
+- README documents hole-punching benefits.
+
+---
+
 # Moefish Coin v0.1.9 / 猫鱼币 v0.1.9
+
 
 ## 中文
 

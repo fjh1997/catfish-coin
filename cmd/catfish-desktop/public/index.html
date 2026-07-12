@@ -53,6 +53,7 @@
       <button class="tab" data-tab="contracts" data-i18n="tabs.contracts">合约</button>
       <button class="tab" data-tab="explorer" data-i18n="tabs.explorer">公开区块</button>
       <button class="tab" data-tab="mytxs" data-i18n="tabs.mytxs">我的交易</button>
+      <button class="tab" data-tab="peers" data-i18n="tabs.peers">节点</button>
       <button class="tab" data-tab="logs" data-i18n="tabs.logs">日志</button>
     </nav>
 
@@ -182,6 +183,33 @@
               </tr>
             </thead>
             <tbody id="walletTxs"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="peers" class="view">
+      <div class="panel">
+        <div class="row between">
+          <h2 data-i18n="peers.title">活跃连接</h2>
+          <button id="peersBtn" class="secondary" data-i18n="actions.refreshPeers">刷新连接</button>
+        </div>
+        <p class="page-info" data-i18n="peers.hint">显示本节点已握手的直接 P2P 连接。公网地址由 STUN 探测；节点经 seed 八卦互连（比特币式 addr）。</p>
+        <p class="page-info" id="peersExternal"></p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th data-i18n="table.address">地址</th>
+                <th data-i18n="table.direction">方向</th>
+                <th data-i18n="table.height">高度</th>
+                <th data-i18n="table.latency">延迟</th>
+                <th data-i18n="table.traffic">流量</th>
+                <th data-i18n="table.version">版本 / Tag</th>
+                <th data-i18n="table.sync">Sync</th>
+              </tr>
+            </thead>
+            <tbody id="peersTable"></tbody>
           </table>
         </div>
       </div>
