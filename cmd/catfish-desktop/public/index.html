@@ -51,7 +51,8 @@
       <button class="tab active" data-tab="wallet" data-i18n="tabs.wallet">钱包</button>
       <button class="tab" data-tab="transfer" data-i18n="tabs.transfer">转账</button>
       <button class="tab" data-tab="contracts" data-i18n="tabs.contracts">合约</button>
-      <button class="tab" data-tab="explorer" data-i18n="tabs.explorer">浏览器</button>
+      <button class="tab" data-tab="explorer" data-i18n="tabs.explorer">公开区块</button>
+      <button class="tab" data-tab="mytxs" data-i18n="tabs.mytxs">我的交易</button>
       <button class="tab" data-tab="logs" data-i18n="tabs.logs">日志</button>
     </nav>
 
@@ -141,6 +142,7 @@
             <button id="blocksBtn" class="secondary" data-i18n="actions.refreshBlocks">刷新区块</button>
           </div>
         </div>
+        <p class="page-info" data-i18n="explorer.publicHint">只显示已出块确认的公开信息；待确认交易请到「我的交易」查看。</p>
         <div id="blocksPageInfo" class="page-info">...</div>
         <div class="table-wrap">
           <table>
@@ -158,11 +160,15 @@
           </table>
         </div>
       </div>
-      <div class="panel explorer-panel">
+    </section>
+
+    <section id="mytxs" class="view">
+      <div class="panel">
         <div class="row between">
           <h2 data-i18n="explorer.walletTitle">我的可解密交易</h2>
           <button id="walletTxBtn" class="secondary" data-i18n="actions.refreshWalletTx">刷新我的交易</button>
         </div>
+        <p class="page-info" data-i18n="explorer.walletHint">包含待确认转账，以及本钱包可解密的已确认收支。</p>
         <div class="table-wrap">
           <table>
             <thead>

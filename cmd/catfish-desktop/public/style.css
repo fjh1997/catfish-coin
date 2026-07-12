@@ -330,6 +330,7 @@ label {
   border: 1px solid rgba(78, 200, 224, 0.22);
   border-radius: 999px;
   backdrop-filter: blur(8px);
+  scrollbar-width: thin;
 }
 
 .tab {

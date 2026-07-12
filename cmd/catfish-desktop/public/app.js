@@ -39,7 +39,8 @@ const i18n = {
     'tabs.wallet': '钱包',
     'tabs.transfer': '转账',
     'tabs.contracts': '合约',
-    'tabs.explorer': '浏览器',
+    'tabs.explorer': '公开区块',
+    'tabs.mytxs': '我的交易',
     'tabs.logs': '日志',
     'wallet.address': '钱包地址',
     'wallet.balanceFull': '总余额',
@@ -57,7 +58,9 @@ const i18n = {
     'contracts.args': '参数 JSON',
     'contracts.deposit': 'DERO 存入',
     'explorer.publicTitle': '公开区块交易',
+    'explorer.publicHint': '只显示已出块确认的公开信息；待确认交易请到「我的交易」查看。',
     'explorer.walletTitle': '我的可解密交易',
+    'explorer.walletHint': '包含待确认转账，以及本钱包可解密的已确认收支。',
     'logs.title': '运行日志',
     'table.topo': 'Topo',
     'table.height': '高度',
@@ -129,7 +132,8 @@ const i18n = {
     'tabs.wallet': 'Wallet',
     'tabs.transfer': 'Transfer',
     'tabs.contracts': 'Contracts',
-    'tabs.explorer': 'Explorer',
+    'tabs.explorer': 'Public Blocks',
+    'tabs.mytxs': 'My Txs',
     'tabs.logs': 'Logs',
     'wallet.address': 'Wallet Address',
     'wallet.balanceFull': 'Total Balance',
@@ -147,7 +151,9 @@ const i18n = {
     'contracts.args': 'Args JSON',
     'contracts.deposit': 'DERO Deposit',
     'explorer.publicTitle': 'Public Block Transactions',
+    'explorer.publicHint': 'Shows confirmed public block data only. Check My Txs for pending transfers.',
     'explorer.walletTitle': 'My Decryptable Transactions',
+    'explorer.walletHint': 'Includes pending transfers and confirmed txs this wallet can decrypt.',
     'logs.title': 'Runtime Logs',
     'table.topo': 'Topo',
     'table.height': 'Height',
@@ -283,6 +289,8 @@ function setLanguage(lang) {
   applyLanguage();
   if (state.activeTab === 'explorer') {
     refreshBlocks();
+  }
+  if (state.activeTab === 'mytxs') {
     refreshWalletTransactions();
   }
 }
@@ -488,6 +496,8 @@ function switchTab(tab) {
   if (tab === 'logs') refreshLogs();
   if (tab === 'explorer') {
     refreshBlocks();
+  }
+  if (tab === 'mytxs') {
     refreshWalletTransactions();
   }
 }
@@ -531,7 +541,7 @@ async function sendTransfer() {
     $('transferResult').textContent = JSON.stringify(data, null, 2);
     toast(t('toast.txSubmitted'));
     await refreshStatus();
-    await refreshWalletTransactions();
+    switchTab('mytxs');
   } catch (error) {
     $('transferResult').textContent = error.message;
     toast(error.message);
@@ -637,7 +647,8 @@ function init() {
   setInterval(refreshStatus, 3000);
   setInterval(() => {
     if (state.activeTab === 'logs') refreshLogs();
-    if (state.activeTab === 'explorer') refreshWalletTransactions();
+    if (state.activeTab === 'explorer') refreshBlocks();
+    if (state.activeTab === 'mytxs') refreshWalletTransactions();
   }, 3000);
 }
 
