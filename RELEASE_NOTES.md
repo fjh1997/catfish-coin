@@ -1,16 +1,15 @@
-# Catfish Coin v0.1.7 / 猫鱼币 v0.1.7
+# Catfish Coin v0.1.8 / 猫鱼币 v0.1.8
 
 ## 中文
 
-本版本修复新节点同步历史区块时可能卡住的问题。
+本版本更新品牌视觉与产品定位文案，并把新图标打进 Windows 桌面客户端。
 
 更新内容：
 
-- 修复远端节点从旧高度追同步时，可能把历史 miniblock 误判为 `miner address not registered` 的问题。
-- 根因：同步历史块时，节点用了本地当前 tip 的地址状态窗口去校验历史 miniblock 矿工地址；当本地还停在较低高度时，会误判后续块中的矿工地址未注册。
-- 修复方式：验证候选区块时，按候选区块自己的 topo/成熟窗口读取状态，而不是按当前本地 tip 读取状态。
-- 保留 v0.1.6 的 miniblock 地址哈希前 16 字节兼容修复。
-- 仍然不依赖自动重启或清链；节点应能在现有链数据上继续正常同步。
+- 将产品定位明确为「新型实验性隐私加密货币」，同步更新 README、GitHub About 与桌面端文案。
+- 采用猫鱼卡通形象重做应用图标：实心金币底 + 猫鱼吉祥物。
+- Windows 客户端嵌入新 `.ico`（任务栏 / 窗口图标），UI 顶栏与发布包内 `logo.png` 同步更新。
+- 保留 v0.1.7 的历史 miniblock 地址校验修复；本版本无共识/同步逻辑变更。
 
 使用方式：
 
@@ -27,15 +26,14 @@
 
 ## English
 
-This release fixes a sync stall that could affect new or lagging nodes while importing historical blocks.
+This release refreshes branding and ships the new icon in the Windows desktop client.
 
 Changes:
 
-- Fixed historical miniblocks being incorrectly rejected as `miner address not registered` during catch-up sync.
-- Root cause: historical block validation used the local node's current tip-based address maturity window instead of the candidate block's own topo/maturity window.
-- Fix: candidate block validation now resolves miner address registration state from the candidate block's own historical window.
-- Keeps the v0.1.6 compatibility fix for the first 16 bytes of serialized miniblock miner address hashes.
-- No automatic chain reset or restart workaround is required; nodes should continue syncing with existing chain data.
+- Clarified product positioning as an experimental privacy cryptocurrency across README, GitHub About, and desktop copy.
+- Rebuilt the app icon from the Catfish mascot artwork: solid gold coin behind the mascot.
+- Embedded the new Windows `.ico` into `CatfishDero.exe`, and updated the in-app header logo plus packaged `logo.png`.
+- Keeps the v0.1.7 historical miniblock address validation fix; no consensus or sync logic changes in this release.
 
 Usage:
 
