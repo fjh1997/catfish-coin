@@ -115,7 +115,7 @@ var Mainnet = CHAIN_CONFIG{Name: "mainnet",
 
 }
 
-var Testnet = CHAIN_CONFIG{Name: "testnet", // Catfish public test chain
+var Testnet = CHAIN_CONFIG{Name: "testnet", // Moefish public test chain
 	Network_ID:              uuid.FromBytesOrNil([]byte{0x43, 0x41, 0x54, 0x46, 0x49, 0x53, 0x48, 0x2d, 0x44, 0x45, 0x52, 0x4f, 0x2d, 0x32, 0x36, 0x01}),
 	GETWORK_Default_Port:    10100,
 	P2P_Default_Port:        40411,

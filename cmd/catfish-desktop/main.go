@@ -384,7 +384,7 @@ func (a *app) startNode(ctx context.Context) error {
 		"--max-peers=32",
 		"--timeisinsync",
 		"--fastsync",
-		"--node-tag=CatfishDero",
+		"--node-tag=MoefishDero",
 		"--log-dir=" + a.logDir,
 	}
 	env := append(os.Environ(),
@@ -397,7 +397,7 @@ func (a *app) startNode(ctx context.Context) error {
 		return err
 	}
 	a.node = proc
-	a.logs.add("client", []byte("Catfish public node is starting; seed="+publicSeedNode))
+	a.logs.add("client", []byte("Moefish public node is starting; seed="+publicSeedNode))
 	return nil
 }
 

@@ -1,9 +1,9 @@
-# Catfish Coin / 猫鱼币
+# Moefish Coin / 猫鱼币
 
 <div align="center">
-  <img src="./docs/images/catfish-logo.png" alt="Catfish Coin" width="112" />
-  <h1>Catfish Coin / 猫鱼币</h1>
-  <p><b>Catfish Coin（猫鱼币）</b>是一种基于 <b>DERO Homomorphic Encryption</b> 的<strong>新型实验性隐私加密货币</strong>：默认加密余额与转账、原生智能合约、CPU 可参与挖矿，并提供可双击启动的 Windows 桌面钱包。</p>
+  <img src="./docs/images/catfish-logo.png" alt="Moefish Coin" width="112" />
+  <h1>Moefish Coin / 猫鱼币</h1>
+  <p><b>Moefish Coin（猫鱼币）</b>是一种基于 <b>DERO Homomorphic Encryption</b> 的<strong>新型实验性隐私加密货币</strong>：默认加密余额与转账、原生智能合约、CPU 可参与挖矿，并提供可双击启动的 Windows 桌面钱包。</p>
   <p>一句话：它不是“又一个交易所代币”，而是一条可本地运行、可公开参与的<strong>隐私加密货币网络</strong>，同时支持公网主链与自建链部署。</p>
 
   <p>
@@ -25,11 +25,11 @@
 </div>
 
 <p align="center">
-  <img src="./docs/images/catfishcoin.png" alt="Catfish Coin desktop wallet" width="680" />
+  <img src="./docs/images/catfishcoin.png" alt="Moefish Coin desktop wallet" width="680" />
 </p>
 
 <p align="center">
-  <img src="./docs/images/catfishcoin2.png" alt="Catfish Coin explorer and transfer" width="680" />
+  <img src="./docs/images/catfishcoin2.png" alt="Moefish Coin explorer and transfer" width="680" />
 </p>
 
 ## Overview
@@ -46,7 +46,7 @@
 
 同时保留两种参与方式：
 
-- 直接加入 Catfish 公网主链
+- 直接加入 Moefish 公网主链
 - fork 后部署自己的隐私加密货币网络
 
 本仓库是 DERO HE 的修改版分叉项目，与 DERO Project 无隶属、认可或赞助关系。本项目仅供学习、娱乐、技术研究和评估，**不构成投资、募资或收益承诺**。
@@ -68,7 +68,7 @@
 
 ## Why This Exists
 
-很多开源加密货币项目要么偏服务端节点、要么挖矿门槛高、要么钱包/合约/浏览器体验分散。Catfish Coin 想验证一个更轻、更可触摸的实验方向：
+很多开源加密货币项目要么偏服务端节点、要么挖矿门槛高、要么钱包/合约/浏览器体验分散。Moefish Coin 想验证一个更轻、更可触摸的实验方向：
 
 - 一个普通用户下载 zip 后，就能直接打开桌面加密货币客户端
 - 节点、钱包、挖矿、转账、区块浏览器放在同一个本地页面里
@@ -76,13 +76,13 @@
 - 隐私链公开浏览器只展示公开可见信息，本地钱包视图只展示自己能解密的交易
 - seed 节点只负责发现和同步入口，不负责控制链
 
-当前版本已经修复 DERO miniblock 矿工地址哈希校验问题。v0.1.7 起历史高度兼容校验已加强；v0.1.8 更新了品牌图标与隐私币定位文案。更早的 v0.1.6 本地验证从高度 28 挖到 30，`rejected=0`，钱包余额正常增加。
+当前版本已经修复 DERO miniblock 矿工地址哈希校验问题。v0.1.7 起历史高度兼容校验已加强；v0.1.9 起英文名改为 Moefish Coin，并更新了品牌图标与隐私币定位文案。更早的 v0.1.6 本地验证从高度 28 挖到 30，`rejected=0`，钱包余额正常增加。
 
 ## Highlights
 
 - **新型实验性隐私加密货币**：原生币 + 同态加密账户模型，不是交易所平台代币
 - 原生 Go 桌面启动器，不使用 Electron，不捆绑 Node.js
-- 双击 `CatfishDero.exe` 自动启动本地 `derod` 和钱包
+- 双击 `MoefishDero.exe` 自动启动本地 `derod` 和钱包
 - 手动 `开始挖矿 / 停止挖矿`，避免默认占用 CPU
 - 已注册地址可稳定作为矿工地址使用
 - 注册、待确认、成熟可挖矿状态均有提示
@@ -96,12 +96,12 @@
 
 ## Quick Start
 
-### 方式一：直接参与 Catfish 公网主链
+### 方式一：直接参与 Moefish 公网主链
 
 1. 打开 [GitHub Releases](https://github.com/fjh1997/catfish-coin/releases)。
-2. 下载 `catfish-dero-public-windows.zip`。
+2. 下载 `moefish-dero-public-windows.zip`。
 3. 在 Windows 上解压到任意目录。
-4. 双击 `CatfishDero.exe`。
+4. 双击 `MoefishDero.exe`。
 5. 节点和钱包会自动启动；挖矿只有点击 `开始挖矿` 后才会开始。
 
 当前发布版：
@@ -110,7 +110,7 @@
 https://github.com/fjh1997/catfish-coin/releases/latest
 ```
 
-默认 Catfish 公网主链 seed：
+默认 Moefish 公网主链 seed：
 
 ```text
 150.158.101.65:40411
@@ -212,7 +212,7 @@ DERO 风格交易会向公开区块浏览器隐藏普通转账金额和真实参
 Use and distribution of this technology is subject to the Java Research License included herein
 ```
 
-本分叉修改内容包括网络配置、seed 节点配置、注册交易 PoW 阈值、daemon RPC 对 mempool 交易的展开、钱包 mempool 待确认交易扫描、矿工地址校验修复、Catfish 桌面客户端和打包脚本。
+本分叉修改内容包括网络配置、seed 节点配置、注册交易 PoW 阈值、daemon RPC 对 mempool 交易的展开、钱包 mempool 待确认交易扫描、矿工地址校验修复、Moefish 桌面客户端和打包脚本。
 
 ## 上游与免责声明
 
@@ -225,7 +225,7 @@ Use and distribution of this technology is subject to the Java Research License 
 
 ### Overview
 
-**Catfish Coin is a new experimental privacy cryptocurrency.**
+**Moefish Coin is a new experimental privacy cryptocurrency.**
 
 It is built on the DERO Homomorphic Encryption stack and is meant to feel like a real cryptocurrency network you can run locally:
 
@@ -235,15 +235,15 @@ It is built on the DERO Homomorphic Encryption stack and is meant to feel like a
 - native DVM smart contracts
 - a Windows desktop client that starts node + wallet + explorer together
 
-You can join the Catfish public chain, or fork the project and deploy your own privacy cryptocurrency network.
+You can join the Moefish public chain, or fork the project and deploy your own privacy cryptocurrency network.
 
 This repository is a modified fork of DERO HE. It is not affiliated with, endorsed by, or sponsored by the DERO Project. It is for learning, entertainment, technical research, and evaluation only, and it is **not an investment, fundraising, or yield product**.
 
 ### What Kind of Cryptocurrency
 
-Catfish Coin sits closer to privacy coins and programmable privacy chains than to exchange tokens or app-only assets:
+Moefish Coin sits closer to privacy coins and programmable privacy chains than to exchange tokens or app-only assets:
 
-| Category | Nearby examples | Catfish Coin |
+| Category | Nearby examples | Moefish Coin |
 | --- | --- | --- |
 | Privacy cryptocurrency | Monero / Firo / Pirate Chain | Encrypted amounts and participants by default |
 | Homomorphic / account privacy chain | DERO HE | HE account model with encrypted balance settlement |
@@ -257,9 +257,9 @@ The experiment is simple:
 ### Join the Public Chain
 
 1. Open [GitHub Releases](https://github.com/fjh1997/catfish-coin/releases).
-2. Download `catfish-dero-public-windows.zip`.
+2. Download `moefish-dero-public-windows.zip`.
 3. Extract it to any folder on Windows.
-4. Double-click `CatfishDero.exe`.
+4. Double-click `MoefishDero.exe`.
 5. The node and wallet start automatically. Mining starts only after clicking `Start Mining`.
 
 Default public-chain seed:

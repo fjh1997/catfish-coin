@@ -14,7 +14,7 @@ const $ = (id) => document.getElementById(id);
 
 const i18n = {
   zh: {
-    'app.title': 'Catfish Coin / 猫鱼币',
+    'app.title': 'Moefish Coin / 猫鱼币',
     'app.subtitle': '新型实验性隐私加密货币 · 公网主链',
     'actions.refresh': '刷新',
     'actions.startMining': '开始挖矿',
@@ -104,7 +104,7 @@ const i18n = {
     'blockNote.miningReward': '矿工奖励 {amount}',
   },
   en: {
-    'app.title': 'Catfish Coin',
+    'app.title': 'Moefish Coin',
     'app.subtitle': 'Experimental privacy cryptocurrency · public chain',
     'actions.refresh': 'Refresh',
     'actions.startMining': 'Start Mining',
