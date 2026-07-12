@@ -1,7 +1,7 @@
 # Catfish Coin / 猫鱼币
 
 <div align="center">
-  <img src="./docs/images/catfish-logo.svg" alt="Catfish Coin" width="112" />
+  <img src="./docs/images/catfish-logo.png" alt="Catfish Coin" width="112" />
   <h1>Catfish Coin / 猫鱼币</h1>
   <p><b>Catfish Coin（猫鱼币）</b>是一种基于 <b>DERO Homomorphic Encryption</b> 的<strong>新型实验性隐私加密货币</strong>：默认加密余额与转账、原生智能合约、CPU 可参与挖矿，并提供可双击启动的 Windows 桌面钱包。</p>
   <p>一句话：它不是“又一个交易所代币”，而是一条可本地运行、可公开参与的<strong>隐私加密货币网络</strong>，同时支持公网主链与自建链部署。</p>

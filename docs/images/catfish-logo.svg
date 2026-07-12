@@ -1,41 +1,60 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
-  <title id="title">Catfish Coin logo</title>
-  <desc id="desc">A cartoon catfish wrapped around a gold coin with Catfish Coin initials.</desc>
+  <title id="title">Catfish Coin</title>
+  <desc id="desc">Minimal teal catfish and gold coin mark for the Catfish Coin privacy cryptocurrency.</desc>
   <defs>
-    <linearGradient id="coin" x1="126" y1="92" x2="388" y2="420" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#FFE58A"/>
-      <stop offset="0.5" stop-color="#F7B733"/>
-      <stop offset="1" stop-color="#D98A12"/>
+    <linearGradient id="bg" x1="80" y1="40" x2="430" y2="470" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F7FCFD"/>
+      <stop offset="1" stop-color="#D5EEF3"/>
     </linearGradient>
-    <linearGradient id="fish" x1="125" y1="148" x2="404" y2="338" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#52C7D8"/>
-      <stop offset="1" stop-color="#167C99"/>
+    <radialGradient id="coinGlow" cx="256" cy="250" r="170" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE7A0"/>
+      <stop offset="0.7" stop-color="#E8B23C"/>
+      <stop offset="1" stop-color="#B87412"/>
+    </radialGradient>
+    <linearGradient id="fishBody" x1="90" y1="210" x2="430" y2="290" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6AD5E4"/>
+      <stop offset="0.5" stop-color="#1E93AC"/>
+      <stop offset="1" stop-color="#0D5F73"/>
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#0D2B38" flood-opacity="0.22"/>
+    <linearGradient id="fishAccent" x1="340" y1="150" x2="460" y2="230" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8BE0EC"/>
+      <stop offset="1" stop-color="#147A94"/>
+    </linearGradient>
+    <filter id="lift" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0B3542" flood-opacity="0.16"/>
     </filter>
   </defs>
 
-  <rect width="512" height="512" rx="112" fill="#EAF8FA"/>
+  <rect width="512" height="512" rx="120" fill="url(#bg)"/>
 
-  <g filter="url(#shadow)">
-    <circle cx="256" cy="256" r="174" fill="url(#coin)" stroke="#8F5D10" stroke-width="14"/>
-    <circle cx="256" cy="256" r="132" fill="none" stroke="#FFF1AF" stroke-width="12" opacity="0.9"/>
-    <path d="M204 325c24 20 77 20 102 0" fill="none" stroke="#A06412" stroke-width="14" stroke-linecap="round"/>
-    <text x="256" y="292" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="116" font-weight="800" fill="#7B4A0B">CF</text>
+  <!-- Coin sits as the brand core -->
+  <g filter="url(#lift)">
+    <circle cx="256" cy="258" r="146" fill="url(#coinGlow)"/>
+    <circle cx="256" cy="258" r="146" fill="none" stroke="#8F5A0E" stroke-width="7" opacity="0.55"/>
+    <circle cx="256" cy="258" r="118" fill="none" stroke="#FFF4C8" stroke-width="10" opacity="0.75"/>
+    <circle cx="256" cy="258" r="98" fill="none" stroke="#C88918" stroke-width="2.5" opacity="0.45"/>
+    <!-- privacy lock motif -->
+    <path d="M224 258a32 32 0 0 1 64 0" fill="none" stroke="#8F5A0E" stroke-width="7" stroke-linecap="round" opacity="0.5"/>
+    <path d="M288 258a32 32 0 0 1-64 0" fill="none" stroke="#8F5A0E" stroke-width="7" stroke-linecap="round" opacity="0.5"/>
+    <circle cx="256" cy="258" r="8" fill="#8F5A0E" opacity="0.55"/>
   </g>
 
-  <g filter="url(#shadow)">
-    <path d="M117 247c34-71 122-108 203-82 57 18 99 60 116 112-36-28-75-37-119-27 20 20 38 47 48 78-48-39-96-48-143-26-53 25-105 5-105-55z" fill="url(#fish)" stroke="#0A4F67" stroke-width="10" stroke-linejoin="round"/>
-    <path d="M357 184c32-35 76-47 114-34-18 24-47 43-86 56" fill="#1E96B1" stroke="#0A4F67" stroke-width="10" stroke-linejoin="round"/>
-    <path d="M138 233c-31-13-64-7-88 16 25 16 57 21 91 9" fill="#1E96B1" stroke="#0A4F67" stroke-width="10" stroke-linejoin="round"/>
-    <circle cx="194" cy="214" r="15" fill="#FFFFFF" stroke="#0A4F67" stroke-width="7"/>
-    <circle cx="199" cy="215" r="6" fill="#12323D"/>
-    <path d="M163 250c30 14 70 14 103-2" fill="none" stroke="#083B50" stroke-width="9" stroke-linecap="round"/>
-    <path d="M181 268c-34 19-68 34-103 45" fill="none" stroke="#083B50" stroke-width="8" stroke-linecap="round"/>
-    <path d="M178 286c-31 32-58 58-84 78" fill="none" stroke="#083B50" stroke-width="8" stroke-linecap="round"/>
-    <path d="M230 272c38 15 77 29 117 42" fill="none" stroke="#083B50" stroke-width="8" stroke-linecap="round"/>
-    <path d="M224 291c33 31 62 55 91 73" fill="none" stroke="#083B50" stroke-width="8" stroke-linecap="round"/>
-    <path d="M245 171c-15-23-13-48 6-73 19 24 24 51 10 80" fill="#52C7D8" stroke="#0A4F67" stroke-width="9" stroke-linejoin="round"/>
+  <!-- Sleeker catfish wrapping the lower-left of the coin -->
+  <g filter="url(#lift)">
+    <path d="M78 268c18-86 126-132 228-96 52 18 92 54 112 98-40-18-86-18-130 2 12 22 22 48 26 76-48-28-104-34-158-12-58 24-94-4-78-68z" fill="url(#fishBody)"/>
+    <path d="M78 268c18-86 126-132 228-96 52 18 92 54 112 98-40-18-86-18-130 2 12 22 22 48 26 76-48-28-104-34-158-12-58 24-94-4-78-68z" fill="none" stroke="#0A4F67" stroke-width="6" stroke-linejoin="round" opacity="0.85"/>
+
+    <path d="M372 176c34-40 90-50 130-28-20 26-52 44-96 52z" fill="url(#fishAccent)" stroke="#0A4F67" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M236 156c-4-26 10-54 34-78-2 30-10 56-24 82z" fill="#57C8D8" stroke="#0A4F67" stroke-width="5.5" stroke-linejoin="round"/>
+    <path d="M142 292c-14 34-30 60-52 82 32-6 58-24 78-54z" fill="#148BA3" stroke="#0A4F67" stroke-width="5.5" stroke-linejoin="round"/>
+
+    <!-- whiskers: distinctive but restrained -->
+    <path d="M136 250c-32 6-58 24-78 48" fill="none" stroke="#0A4F67" stroke-width="5" stroke-linecap="round"/>
+    <path d="M144 266c-34 16-62 36-82 62" fill="none" stroke="#0A4F67" stroke-width="5" stroke-linecap="round"/>
+    <path d="M206 292c38 14 78 28 118 38" fill="none" stroke="#083B50" stroke-width="4" stroke-linecap="round" opacity="0.4"/>
+
+    <circle cx="168" cy="214" r="14" fill="#FFFFFF" stroke="#0A4F67" stroke-width="5"/>
+    <circle cx="172" cy="215" r="5.5" fill="#12323D"/>
+    <path d="M142 242c22 10 52 10 78-2" fill="none" stroke="#083B50" stroke-width="5" stroke-linecap="round"/>
   </g>
 </svg>
